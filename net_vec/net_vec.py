@@ -39,9 +39,6 @@ class Unit:
         """initialize 负责初始化一个 Unit 类中的 恶意包特征和构建包特征
         构建包拥有随机MTU (包长度)、随机的槽位 (时间)、随机的协议层数(不会超过对应恶意包的层数)，
         每个构造包最大拥有max_cft_pkt个包,并将原始包的时间间隔拉长 max_time_extend 倍，方便插入构造包
-        
-        :return: 构建的 X 和包含每个包协议层数的列表
-        :rtype: tuple[Unit, list]
         """
 
         ics_time = 0  # accumulated increased ITA 初始时间对齐时间累加器
@@ -209,6 +206,45 @@ class Unit:
             # prepare for next mal check loop
             prio_mal_time = self.mal[i][0]
 
+    def __add__(self, other):
+        ret = Unit()
+        if isinstance(other, Unit):
+            ret.mal = self.mal + other.mal
+            ret.craft = self.craft + other.craft
+        else:
+            ret.mal = self.mal + other
+            ret.craft = self.craft + other
+        return ret
+    
+    def __sub__(self, other):
+        ret = Unit()
+        if isinstance(other, Unit):
+            ret.mal = self.mal - other.mal
+            ret.craft = self.craft - other.craft
+        else:
+            ret.mal = self.mal - other
+            ret.craft = self.craft - other
+        return ret
+    
+    def __mul__(self, other):
+        ret = Unit()
+        if isinstance(other, Unit):
+            ret.mal = self.mal * other.mal
+            ret.craft = self.craft * other.craft
+        else:
+            ret.mal = self.mal * other
+            ret.craft = self.craft * other
+        return ret
+    
+    def __truediv__(self, other):
+        ret = Unit()
+        if isinstance(other, Unit):
+            ret.mal = self.mal * other.mal
+            ret.craft = self.craft * other.craft
+        else:
+            ret.mal = self.mal * other
+            ret.craft = self.craft * other
+        return ret
     
 if __name__ == "__main__":
     from scapy.all import *
