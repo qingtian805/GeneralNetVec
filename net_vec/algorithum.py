@@ -41,6 +41,7 @@ class NetAlg:
         netAlg 网络算法基类，将自动进行一些有关 Unit 类的设置
 
         :param grp_list: 原始恶意流量
+        :param grp_size: 每次同时处理的恶意流量数量
         :param max_cft_pkt: 每个原始包对应构建包的最大数量(l_c)
         :param max_cft_pkt_prob: 在 0-1 之间的概率,限制一个slot填入构造包的最大概率,相当于 max_cft_pkt 的最大乘数
         :param max_time_extend: 新流量相较于原始的时间倍数(l_t)

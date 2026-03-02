@@ -5,7 +5,7 @@ import numpy as np
 
 from scapy.packet import Raw
 
-from net_alg import cfg
+from net_vec.algorithum import cfg
 
 def decide_has_pkt(crafted_pkt_prob: float):
     """decide_has_pkt 用于确定一个位置是否拥有包，概率为 crafted_pkt_prob
@@ -98,7 +98,6 @@ class Unit:
     def rebuild(self):
         """rebuild 将Unit重建为网络流量,重构结果为 ...X.craft[i] + X.mal[i] + X.craft[i+1] X.mal[i+1]...
 
-        :param grp_list: 原始流量列表
         :return: 重建后的流量列表
         :rtype: list[scapy.Packet]
         """
@@ -248,7 +247,7 @@ class Unit:
     
 if __name__ == "__main__":
     from scapy.all import *
-    from net_alg import NetAlg
+    from net_vec.algorithum import NetAlg
     with open("./test.pcap", "rb") as f:
         grp_list = rdpcap(f)
 
