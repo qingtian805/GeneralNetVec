@@ -31,9 +31,8 @@ class Unit:
         Unit.craft 构建包成员,数据结构:0 时间 1 协议层数 2 mtu 
         一个Unit向量实例表征一条完整的流
         """
-        grp_size = len(cfg.grp_list)
-        self.mal = np.zeros((grp_size, 2), dtype=np.float64)
-        self.craft = np.zeros((grp_size, cfg.max_cft_pkt, 3), dtype=np.float64)
+        self.mal = np.zeros((cfg.grp_size, 2), dtype=np.float64)
+        self.craft = np.zeros((cfg.grp_size, cfg.max_cft_pkt, 3), dtype=np.float64)
 
     def initialize(self):
         """initialize 负责初始化一个 Unit 类中的 恶意包特征和构建包特征
@@ -44,11 +43,10 @@ class Unit:
         ics_time = 0  # accumulated increased ITA 初始时间对齐时间累加器
         last_mal_time = cfg.last_end_time
 
-        grp_size = len(cfg.grp_list)
         # 计算整个流的最大时间长度，+1 的原因是增加原始流量的时间
         max_mal_itv = (cfg.grp_list[-1].time - cfg.last_end_time) * (cfg.max_time_extend + 1)
         # 初始化流量时间序列，
-        for i in range(grp_size):
+        for i in range(cfg.grp_size):
             # 计算距离上个包的时间（itv）
             itv = cfg.grp_list[i].time - last_mal_time
             last_mal_time = cfg.grp_list[i].time
@@ -59,7 +57,7 @@ class Unit:
 
         # building slot map，构建包的位置：每个包之间都可能插入新包，且数量为 max_cft_pkt 倍
         # Slot_itv 是每个槽位的时间间隔
-        slot_num = grp_size * cfg.max_cft_pkt
+        slot_num = cfg.grp_size * cfg.max_cft_pkt
         slot_itv = max_mal_itv / slot_num
 
         # initializing crafted pkts 构建协议层数列表：将每个包的协议层数对应构建的列表
@@ -73,7 +71,7 @@ class Unit:
             slot_time = i * slot_itv + cfg.last_end_time
             if slot_time >= self.mal[nxt_mal_no][0]:
                 nxt_mal_no += 1
-                if nxt_mal_no == grp_size:
+                if nxt_mal_no == cfg.grp_size:
                     break
             # 如果决定不构建包，或当前槽位组包数量达到最大限制（但还有槽位），则继续
             if (not decide_has_pkt(crafted_pkt_prob)
@@ -103,9 +101,8 @@ class Unit:
         """
         
         new_list = []
-        grp_size = len(cfg.grp_list)
         # i+j：遍历所有包
-        for i in range(grp_size):
+        for i in range(cfg.grp_size):
             for j in range(int(round(self.mal[i][1]))):
                 # 构造包复制原始封包
                 pkt = copy.deepcopy(cfg.grp_list[i])
