@@ -3,10 +3,11 @@ import numpy as np
 from scapy.utils import EDecimal
 from scapy.packet import Packet, Raw
 
-class Conf:
+class AlgConf:
     def __init__(self):
         self.grp_list         = None # type: list[Packet]
         self.last_end_time    = None # type: EDecimal
+        self.mimic_set        = None # type: str
         self.max_cft_pkt      = 1 # type: int
         self.max_cft_pkt_prob = 0.01 # type: float
         self.max_time_extend  = 6. # type: float
@@ -20,7 +21,7 @@ class Conf:
         self.grp_size      = None # type: int
         self.proto_max_lmt = None # type: list[float]
 
-cfg = Conf()
+cfg = AlgConf()
 
 class NetAlg:
     def __init__(

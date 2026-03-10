@@ -235,11 +235,11 @@ class Unit:
     def __truediv__(self, other):
         ret = Unit()
         if isinstance(other, Unit):
-            ret.mal = self.mal * other.mal
-            ret.craft = self.craft * other.craft
+            ret.mal = self.mal / other.mal
+            ret.craft = self.craft / other.craft
         else:
-            ret.mal = self.mal * other
-            ret.craft = self.craft * other
+            ret.mal = self.mal / other
+            ret.craft = self.craft / other
         return ret
     
 if __name__ == "__main__":
