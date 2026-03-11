@@ -31,8 +31,8 @@ class Unit:
         Unit.craft 构建包成员,数据结构:0 时间 1 协议层数 2 mtu 
         一个Unit向量实例表征一条完整的流
         """
-        self.mal = np.zeros((cfg.grp_size, 2), dtype=np.float64)
-        self.craft = np.zeros((cfg.grp_size, cfg.max_cft_pkt, 3), dtype=np.float64)
+        self.mal = np.zeros((cfg.pkt_num, 2), dtype=np.float64)
+        self.craft = np.zeros((cfg.pkt_num, cfg.max_cft_pkt, 3), dtype=np.float64)
 
     def initialize(self):
         """initialize 负责初始化一个 Unit 类中的 恶意包特征和构建包特征
@@ -44,20 +44,20 @@ class Unit:
         last_mal_time = cfg.last_end_time
 
         # 计算整个流的最大时间长度，+1 的原因是增加原始流量的时间
-        max_mal_itv = (cfg.grp_list[-1].time - cfg.last_end_time) * (cfg.max_time_extend + 1)
+        max_mal_itv = (cfg.pkt_list[-1].time - cfg.last_end_time) * (cfg.max_time_extend + 1)
         # 初始化流量时间序列，
-        for i in range(cfg.grp_size):
+        for i in range(cfg.pkt_num):
             # 计算距离上个包的时间（itv）
-            itv = cfg.grp_list[i].time - last_mal_time
-            last_mal_time = cfg.grp_list[i].time
+            itv = cfg.pkt_list[i].time - last_mal_time
+            last_mal_time = cfg.pkt_list[i].time
 
             # 随机延长包间隔时间，引入随机性，插入构建包
             ics_time += random.uniform(cfg.min_time_extend, cfg.max_time_extend) * itv
-            self.mal[i][0] = cfg.grp_list[i].time + ics_time
+            self.mal[i][0] = cfg.pkt_list[i].time + ics_time
 
         # building slot map，构建包的位置：每个包之间都可能插入新包，且数量为 max_cft_pkt 倍
         # Slot_itv 是每个槽位的时间间隔
-        slot_num = cfg.grp_size * cfg.max_cft_pkt
+        slot_num = cfg.pkt_num * cfg.max_cft_pkt
         slot_itv = max_mal_itv / slot_num
 
         # initializing crafted pkts 构建协议层数列表：将每个包的协议层数对应构建的列表
@@ -71,7 +71,7 @@ class Unit:
             slot_time = i * slot_itv + cfg.last_end_time
             if slot_time >= self.mal[nxt_mal_no][0]:
                 nxt_mal_no += 1
-                if nxt_mal_no == cfg.grp_size:
+                if nxt_mal_no == cfg.pkt_num:
                     break
             # 如果决定不构建包，或当前槽位组包数量达到最大限制（但还有槽位），则继续
             if (not decide_has_pkt(crafted_pkt_prob)
@@ -102,10 +102,10 @@ class Unit:
         
         new_list = []
         # i+j：遍历所有包
-        for i in range(cfg.grp_size):
+        for i in range(cfg.pkt_num):
             for j in range(int(round(self.mal[i][1]))):
                 # 构造包复制原始封包
-                pkt = copy.deepcopy(cfg.grp_list[i])
+                pkt = copy.deepcopy(cfg.pkt_list[i])
                 pkt_layers = pkt.layers().remove(Raw)
                 pkt_layer_num = len(pkt_layers)
                 target_layer_num = round(self.craft[i][j][1])
@@ -124,7 +124,7 @@ class Unit:
                 pkt.time = self.mal[i][0] - self.craft[i][j][0]
                 new_list.append(pkt)
             # 在构造包之后添加原始封包
-            mal_pkt = copy.deepcopy(cfg.grp_list[i])
+            mal_pkt = copy.deepcopy(cfg.pkt_list[i])
             mal_pkt.time = self.mal[i][0]
             new_list.append(mal_pkt)
 
@@ -132,19 +132,19 @@ class Unit:
     
     def restrict(self):
         
-        max_mal_itv = (float(cfg.grp_list[-1].time) - cfg.last_end_time) * (cfg.max_time_extend + 1)
+        max_mal_itv = (float(cfg.pkt_list[-1].time) - cfg.last_end_time) * (cfg.max_time_extend + 1)
         mal_itv_lmt = max_mal_itv / cfg.fence_time_divider
 
         # calculate max mal time map
         max_mal_time = [max_mal_itv + cfg.last_end_time - mal_itv_lmt]
         # 优化：i 始终指向的后一个包, 直接取后一个包的时间, 停止到 1
-        for i in range(cfg.grp_size - 1, 0, -1):
+        for i in range(cfg.pkt_num - 1, 0, -1):
             max_time = min(max_mal_time[0], self.mal[i][0]) - mal_itv_lmt
             max_mal_time.insert(0, max_time)
             
         # start checking process
         prio_mal_time = cfg.last_end_time
-        for i in range(cfg.grp_size):
+        for i in range(cfg.pkt_num):
             # check mal pkt time
             if self.mal[i][0] - prio_mal_time < mal_itv_lmt:
                 self.mal[i][0] = prio_mal_time + mal_itv_lmt
@@ -246,9 +246,9 @@ if __name__ == "__main__":
     from scapy.all import *
     from net_vec.algorithum import NetAlg
     with open("./test.pcap", "rb") as f:
-        grp_list = rdpcap(f)
+        pkt_list = rdpcap(f)
 
-    alg = NetAlg(grp_list, grp_list[-1].time)
+    alg = NetAlg(pkt_list, pkt_list[-1].time)
     
     t = Unit()
 
@@ -275,6 +275,6 @@ if __name__ == "__main__":
     
     # print(cfg == alg.cfg)
 
-    # cfg.grp_size = 20
+    # cfg.pkt_num = 20
 
     # print(cfg == alg.cfg)

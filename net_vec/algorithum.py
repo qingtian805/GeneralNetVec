@@ -5,7 +5,7 @@ from scapy.packet import Packet, Raw
 
 class AlgConf:
     def __init__(self):
-        self.grp_list         = None # type: list[Packet]
+        self.pkt_list         = None # type: list[Packet]
         self.last_end_time    = None # type: EDecimal
         self.mimic_set        = None # type: str
         self.max_cft_pkt      = 1 # type: int
@@ -18,7 +18,7 @@ class AlgConf:
         self.data_max_lmt     = [np.nan, 1500., 1480., 1460.] # type: list
         self.data_min_lmt     = 0. # type: float
 
-        self.grp_size      = None # type: int
+        self.pkt_num      = None # type: int
         self.proto_max_lmt = None # type: list[float]
 
 cfg = AlgConf()
@@ -26,7 +26,7 @@ cfg = AlgConf()
 class NetAlg:
     def __init__(
             self,
-            grp_list: list[Packet],
+            pkt_list: list[Packet],
             last_end_time: EDecimal,
             max_cft_pkt: int = 1,
             max_cft_pkt_prob: float = 0.01,
@@ -41,8 +41,7 @@ class NetAlg:
         r"""
         netAlg 网络算法基类，将自动进行一些有关 Unit 类的设置
 
-        :param grp_list: 原始恶意流量
-        :param grp_size: 每次同时处理的恶意流量数量
+        :param pkt_list: 原始恶意流量
         :param max_cft_pkt: 每个原始包对应构建包的最大数量(l_c)
         :param max_cft_pkt_prob: 在 0-1 之间的概率,限制一个slot填入构造包的最大概率,相当于 max_cft_pkt 的最大乘数
         :param max_time_extend: 新流量相较于原始的时间倍数(l_t)
@@ -54,7 +53,7 @@ class NetAlg:
         :param data_min_lmt: 用于限制构建包最小的 mtu, 限制构建包, 无论协议层数
         """
         self.cfg = cfg
-        cfg.grp_list = grp_list
+        cfg.pkt_list = pkt_list
         cfg.last_end_time = last_end_time
 
         cfg.max_cft_pkt = max_cft_pkt
@@ -71,10 +70,10 @@ class NetAlg:
         # 用于计算构建包与前个包之间的最小时间间隔，DD 代表在构建包与前个包时间间隔中存在多少个可用时间位置
         cfg.cft_time_divider   = cft_time_divider
 
-        # calculate grpList related data
-        cfg.grp_size = len(grp_list)
+        # calculate pkt_list related data
+        cfg.pkt_num = len(pkt_list)
         cfg.proto_max_lmt = []
-        for i in grp_list:
+        for i in pkt_list:
             layers = i.layers()
             try:
                 layers.remove(Raw)
@@ -90,9 +89,9 @@ class NetAlg:
 if __name__ == "__main__":
     from scapy.utils import rdpcap
     with open("test.pcap", "rb") as f:
-        grp_list = rdpcap(f)
+        pkt_list = rdpcap(f)
 
-    alg = NetAlg(grp_list, grp_list[-1].time)
+    alg = NetAlg(pkt_list, pkt_list[-1].time)
 
     for name, value in cfg.__dict__.items():
         print(name, value)
