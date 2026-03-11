@@ -1,0 +1,154 @@
+import time
+
+import numpy as np
+import pickle as pkl
+from scapy.utils import rdpcap
+from scapy.all import PacketList
+
+from AfterImageExtractor.FEKitsune import Kitsune
+from AfterImageExtractor.KitsuneTools import *
+
+from net_vec.evaluator import Evaluator
+from net_vec.vector import Unit
+
+class KNnormalizer:
+    def __init__(self, model_save_path: str):
+        with open(model_save_path, 'rb') as f:
+            # FM 是在 Kitsune 中的 Feature Mapper
+            self.FM = pkl.load(f)
+
+        self.norm_max = [] # type: list[np.ndarray]
+        self.norm_min = [] # type: list[np.ndarray]
+        for i in range(len(self.FM)):
+            self.norm_max.append(np.full(len(self.FM[i]), -np.inf))
+            self.norm_min.append(np.full(len(self.FM[i], np.inf)))
+
+    def fit_transform(self, X):
+        """对X中的数据执行最大-最小正则化(0-1 Normalize), 同时初始化自身最大最小值
+        
+        :param X: 说明
+        :type X: 
+        :return: 说明
+        :rtype: NDArray
+        """
+        train_Feature = []
+        X = np.array(X)
+        for i in range(len(X)):
+            train_feature = []
+            for j in range(len(self.FM)):
+                x = X[i][self.FM[j]]
+                # update norms
+                self.norm_max[j][x > self.norm_max[j]] = x[x > self.norm_max[j]]
+                self.norm_min[j][x < self.norm_min[j]] = x[x < self.norm_min[j]]
+
+                # 0-1 normalize
+                x = (x - self.norm_min[j]) / (
+                    self.norm_max[j] - self.norm_min[j] + 0.0000000000000001)
+                
+                train_feature = np.concatenate((train_feature, x))
+
+            train_Feature.append(train_feature)
+
+        for i in range(len(self.FM)):
+            self.norm_max[i] = self.norm_max[i].tolist()
+            self.norm_min[i] = self.norm_min[i].tolist()
+
+        self.norm_max = np.array(np.reshape(self.norm_max, (-1)))
+        self.norm_min = np.array(np.reshape(self.norm_min, (-1)))
+        self.FM = np.array(np.reshape(self.FM, (-1)))
+
+        return np.array(train_Feature)
+
+    def transform(self, X):
+        """transform 对X中的数据执行最大-最小正则化(0-1 Normalize)
+        
+        :param X: 说明
+        :type X: 
+        :return: 说明
+        :rtype: Any"""
+        X = np.array(X)
+        # 0-1 normalize
+        X[:, self.FM] = (X[:, self.FM] - self.norm_min) / (
+            self.norm_max - self.norm_min + 0.0000000000000001)
+        
+        return X
+    
+class KitsuneEval(Evaluator):
+    def __init__(
+            self, 
+            model_save_path: str, 
+            feature_path: str, 
+            fm_grace: int, 
+            ad_grace: int,
+            mimic_set: np.ndarray,
+            init_pcap_in: str = None
+            ):
+        
+        """
+        :param model_save_path: Kitsune 模型存储的路径，需要其中包含 Feature Mapper
+        :param feature_path: 
+        """
+        
+        super().__init__(mimic_set)
+
+        self.normalizer = KNnormalizer(model_save_path)
+        train_feat = np.load(feature_path)
+        self.normalizer.fit_transform(train_feat[fm_grace:ad_grace])
+
+        if init_pcap_in is None:
+            self.global_FE = Kitsune(PacketList(), np.inf)
+        else:
+            self.global_FE = Kitsune(rdpcap(init_pcap_in), np.inf)
+            RunFE(self.global_FE)
+    
+    def evaluate(self, x: Unit):
+        """
+        距离估计函数，计算当前特征与良性流量特征（全部）的 L2 距离(最大最小正则化后)
+
+        :param mimic_set: 模仿集合，根据代码来看是已经经过最大最小标准化的流量 Kitsune feature
+        :type mimic_set: np.array
+        :return: 说明
+        :rtype: Any
+        """
+
+        # if self.show_info:
+        # print("----@Particle: Evaluate distance...")
+
+        self.pktList = x.rebuild()
+        # 
+        mal_pos = []
+        cft_num = 0
+
+        for i in range(self.alg_cfg.pkt_num):
+            cft_num += int(round(x.mal[i][1]))
+            mal_pos.append(i + cft_num)
+
+        local_FE = Kitsune(self.pktList, np.inf, True)
+        local_FE.FE.nstat = safelyCopyNstat(self.global_FE.FE.nstat, True)
+        feature, all_feature = RunFE(local_FE, origin_pos=mal_pos)
+
+        feature = np.asarray(feature)
+        # 将皮尔森系数设为 0？
+        feature[:, 33:50:4] = 0.
+        feature[:, 83:100:4] = 0.
+
+        norm_feature = self.normalizer.transform(feature)
+
+        # 计算每个特征与对应目标特征的 l2 距离（范数），取最小值作为评价指标
+        for i in range(self.alg_cfg.pkt_num):
+            dis = min(np.linalg.norm(norm_feature[i] - self.eval_cfg.mimic_set,
+                                     axis=1)) 
+
+        return dis
+    
+    def forward(self, best_pkt_list: PacketList):
+        """
+        令 Feature Extractor 在 best_pkt_list 上运行，过程不返回结果
+        一般用于准备进行下一组评价
+        """
+        # Prepare for next evaluate
+        nstat = self.global_FE.FE.nstat
+        self.global_FE = Kitsune(best_pkt_list, np.inf, False)
+        self.global_FE.FE.nstat = safelyCopyNstat(nstat, False)
+        RunFE(self.global_FE)
+        
