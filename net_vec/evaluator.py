@@ -1,12 +1,7 @@
 from scapy.plist import PacketList
 
-from net_vec.vector import Unit
-from net_vec.algorithum import cfg as alg_cfg
-
-class EvalConf:
-    mimic_set = None # type: str
-
-eval_cfg = EvalConf()
+from vector import Unit
+from config import cfg
 
 class Evaluator:
     def __init__(
@@ -16,10 +11,9 @@ class Evaluator:
         """
         :param mimic_set: 被模仿特征的正常流量 mimic(模仿、拟态)
         """
-        self.alg_cfg = alg_cfg
-        self.eval_cfg = eval_cfg
+        self.cfg = cfg
 
-        eval_cfg.mimic_set = mimic_set
+        cfg.mimic_set = mimic_set
 
     def forward(self, grp_best_pkt_list: PacketList):
         """

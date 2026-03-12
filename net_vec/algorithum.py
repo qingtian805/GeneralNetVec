@@ -1,27 +1,8 @@
 import numpy as np
-
 from scapy.utils import EDecimal
 from scapy.packet import Packet, Raw
 
-class AlgConf:
-    def __init__(self):
-        self.pkt_list         = None # type: list[Packet]
-        self.last_end_time    = None # type: EDecimal
-        self.mimic_set        = None # type: str
-        self.max_cft_pkt      = 1 # type: int
-        self.max_cft_pkt_prob = 0.01 # type: float
-        self.max_time_extend  = 6. # type: float
-        self.min_time_extend  = 3. # type: float
-        self.fence_time_divider = 10000 # type: int
-        self.cft_time_divider = 1000 # type: int
-        self.proto_min_lmt    = 1. # type: float
-        self.data_max_lmt     = [np.nan, 1500., 1480., 1460.] # type: list
-        self.data_min_lmt     = 0. # type: float
-
-        self.pkt_num      = None # type: int
-        self.proto_max_lmt = None # type: list[float]
-
-cfg = AlgConf()
+from config import cfg
 
 class NetAlg:
     def __init__(
@@ -85,6 +66,18 @@ class NetAlg:
                 proto_layer = 3
 
             cfg.proto_max_lmt.append(float(proto_layer))
+    
+    def execute(self) -> tuple:
+        """
+        优化算法执行函数
+        约定返回内容数组：
+        1. 增加时间
+        2. 优化后最后一个包的结束时间
+        3. 最佳 Unit
+        4. 最佳 Unit 的评价结果
+        5. 最佳 Unit 优化历史（距离记录）
+        """
+        pass
 
 if __name__ == "__main__":
     from scapy.utils import rdpcap

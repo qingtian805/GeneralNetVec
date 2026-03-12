@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 import pickle as pkl
 from scapy.utils import rdpcap
@@ -111,15 +109,12 @@ class KitsuneEval(Evaluator):
         :rtype: Any
         """
 
-        # if self.show_info:
-        # print("----@Particle: Evaluate distance...")
-
         self.pktList = x.rebuild()
-        # 
+
         mal_pos = []
         cft_num = 0
 
-        for i in range(self.alg_cfg.pkt_num):
+        for i in range(self.cfg.pkt_num):
             cft_num += int(round(x.mal[i][1]))
             mal_pos.append(i + cft_num)
 
@@ -135,8 +130,8 @@ class KitsuneEval(Evaluator):
         norm_feature = self.normalizer.transform(feature)
 
         # 计算每个特征与对应目标特征的 l2 距离（范数），取最小值作为评价指标
-        for i in range(self.alg_cfg.pkt_num):
-            dis = min(np.linalg.norm(norm_feature[i] - self.eval_cfg.mimic_set,
+        for i in range(self.cfg.pkt_num):
+            dis = min(np.linalg.norm(norm_feature[i] - self.cfg.mimic_set,
                                      axis=1)) 
 
         return dis
