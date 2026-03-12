@@ -3,12 +3,11 @@ from scapy.utils import EDecimal
 from scapy.packet import Packet, Raw
 
 from config import cfg
+from evaluator import Evaluator
 
 class NetAlg:
     def __init__(
             self,
-            pkt_list: list[Packet],
-            last_end_time: EDecimal,
             max_cft_pkt: int = 1,
             max_cft_pkt_prob: float = 0.01,
             max_time_extend: float = 6.,
@@ -22,7 +21,9 @@ class NetAlg:
         r"""
         netAlg 网络算法基类，将自动进行一些有关 Unit 类的设置
 
-        :param pkt_list: 原始恶意流量
+        在具体的算法实现中，此处应该包含一些超参数的记录与设置，但不应该包含算法初始化步骤，
+        算法的具体初始化步骤应当合并到算法执行函数中
+
         :param max_cft_pkt: 每个原始包对应构建包的最大数量(l_c)
         :param max_cft_pkt_prob: 在 0-1 之间的概率,限制一个slot填入构造包的最大概率,相当于 max_cft_pkt 的最大乘数
         :param max_time_extend: 新流量相较于原始的时间倍数(l_t)
@@ -34,8 +35,6 @@ class NetAlg:
         :param data_min_lmt: 用于限制构建包最小的 mtu, 限制构建包, 无论协议层数
         """
         self.cfg = cfg
-        cfg.pkt_list = pkt_list
-        cfg.last_end_time = last_end_time
 
         cfg.max_cft_pkt = max_cft_pkt
         cfg.max_cft_pkt_prob = max_cft_pkt_prob
@@ -51,7 +50,17 @@ class NetAlg:
         # 用于计算构建包与前个包之间的最小时间间隔，DD 代表在构建包与前个包时间间隔中存在多少个可用时间位置
         cfg.cft_time_divider   = cft_time_divider
 
-        # calculate pkt_list related data
+    def set_pkt_list(
+            self, 
+            pkt_list: list[Packet], 
+            last_end_time: EDecimal
+            ):
+        """
+        设置原始包列表和最后一个包的结束时间, 以便算法使用
+        """
+        cfg.pkt_list = pkt_list
+        cfg.last_end_time = last_end_time
+
         cfg.pkt_num = len(pkt_list)
         cfg.proto_max_lmt = []
         for i in pkt_list:
@@ -66,10 +75,14 @@ class NetAlg:
                 proto_layer = 3
 
             cfg.proto_max_lmt.append(float(proto_layer))
-    
+
+
+    def set_evaluator(self, evaluator: Evaluator):
+        self.evaluator = evaluator
+
     def execute(self) -> tuple:
         """
-        优化算法执行函数
+        优化算法执行函数，应当包含数据结构初始化在内的算法一切步骤
         约定返回内容数组：
         1. 增加时间
         2. 优化后最后一个包的结束时间

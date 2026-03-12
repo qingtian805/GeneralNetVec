@@ -1,4 +1,5 @@
 from scapy.plist import PacketList
+import numpy as np
 
 from vector import Unit
 from config import cfg
@@ -6,14 +7,14 @@ from config import cfg
 class Evaluator:
     def __init__(
             self,
-            mimic_set: str
+            mimic_set_file: str
         ):
         """
-        :param mimic_set: 被模仿特征的正常流量 mimic(模仿、拟态)
+        :param mimic_set: 被模仿特征的正常流量特征文件 mimic(模仿、拟态)，应当是numpy保存的ndarray
         """
         self.cfg = cfg
-
-        cfg.mimic_set = mimic_set
+        with open(mimic_set_file, "rb") as f:
+            self.cfg.mimic_set = np.load(f)
 
     def forward(self, grp_best_pkt_list: PacketList):
         """
