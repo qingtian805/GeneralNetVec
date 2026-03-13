@@ -1,8 +1,8 @@
 from scapy.plist import PacketList
 import numpy as np
 
-from vector import Unit
-from config import cfg
+from .vector import Unit
+from .config import cfg
 
 class Evaluator:
     def __init__(

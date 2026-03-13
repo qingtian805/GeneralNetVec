@@ -2,8 +2,8 @@ import numpy as np
 from scapy.utils import EDecimal
 from scapy.packet import Packet, Raw
 
-from config import cfg
-from evaluator import Evaluator
+from .config import cfg
+from .evaluator import Evaluator
 
 class NetAlg:
     def __init__(
