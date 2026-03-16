@@ -15,8 +15,8 @@ class Evaluator:
         self.cfg = cfg
         with open(mimic_set_file, "rb") as f:
             self.cfg.mimic_set = np.load(f)
-        # logger API
-        self.feature = None # type:list
+        # logger API, 分别为不包含和包含构建包的流量特征列表
+        self.feature = None # type: list
         self.all_feature = None # type: list
 
     def forward(self, grp_best_pkt_list: PacketList):
@@ -30,6 +30,8 @@ class Evaluator:
         """
         评估函数，接受一个 Unit，并在内部完成评价，返回一个 float 数值作为评价结果
         函数会创建一个局部特征提取器，不会影响全局特征提取器，并计算与模仿集合的l2距离作为评价结果
+
+        实现时请注意将提取特征存储到 feature 和 all_feature 中
 
         :param x: 需要评估的 Unit
         :return: 评价结果

@@ -26,7 +26,7 @@ class NetAlg:
         netAlg 网络算法基类，将自动进行一些有关 Unit 类的设置
 
         在具体的算法实现中，此处应该包含一些超参数的记录与设置，但不应该包含算法初始化步骤，
-        算法的具体初始化步骤应当合并到算法执行函数中
+        算法的具体初始化步骤应当合并到算法执行函数 excute 中，并实现一个每轮迭代函数，
 
         :param max_cft_pkt: 每个原始包对应构建包的最大数量(l_c)
         :param max_cft_pkt_prob: 在 0-1 之间的概率,限制一个slot填入构造包的最大概率,相当于 max_cft_pkt 的最大乘数
@@ -56,16 +56,12 @@ class NetAlg:
 
         self.evaluator = None # type: Evaluator
         self.glob_best_x = None # type: Unit
-        self.glob_best_x_index = -1 # used by logger to record feature
         self.glob_best_x_dis = np.inf
+        # Logger API
+        self.glob_best_x_index = -1
 
         if pkt_list is not None:
             self.set_pkt_list(pkt_list, last_end_time)
-
-    def _update_glob_best_x(self, new_best_x: Unit, distance: float, index: int):
-        self.glob_best_x = deepcopy(new_best_x)
-        self.glob_best_x_dis = distance
-        self.glob_best_x_index = index
 
     def set_pkt_list(
             self, 
@@ -96,12 +92,16 @@ class NetAlg:
 
             cfg.proto_max_lmt.append(float(proto_layer))
 
-    def _iteration(self):
+    def _update_glob_best_x(self, new_best_x: Unit, distance: float, index: int):
+        self.glob_best_x = deepcopy(new_best_x)
+        self.glob_best_x_dis = distance
+        self.glob_best_x_index = index
+    
+    def get_paramter(self):
         """
-        优化算法单次迭代函数，本函数是算法内部函数，设计在这里方便logger记录
-        迭代历史
+        通过本函数返回算法的参数
         """
-        pass
+        return dict()
 
     def execute(self):
         """
