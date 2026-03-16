@@ -6,8 +6,8 @@ t = time.time()
 pkts = []
 for i in range(1, 11):
 
-    pkt = Ether(dst="01:02:03:04:05:06")/\
-        IP(dst="192.168.1.1")
+    pkt = Ether(dst="01:02:03:04:05:06", src="06:05:04:03:02:01")/\
+        IP(dst="192.168.1.1", src="192.168.1.2")
     pkt.time = t
     t += 0.1*i
     pkts.append(pkt)
