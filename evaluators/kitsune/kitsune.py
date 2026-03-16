@@ -8,6 +8,7 @@ from AfterImageExtractor.KitsuneTools import *
 
 from net_vec.evaluator import Evaluator
 from net_vec.vector import Unit
+from net_vec.logger import logger
 
 class KNnormalizer:
     def __init__(self, model_save_path: str):
@@ -99,6 +100,7 @@ class KitsuneEval(Evaluator):
             self.global_FE = Kitsune(rdpcap(init_pcap_in), np.inf)
             RunFE(self.global_FE)
     
+    @logger.evaluate_log
     def evaluate(self, x: Unit):
         """
         距离估计函数，计算当前特征与良性流量特征（全部）的 L2 距离(最大最小正则化后)

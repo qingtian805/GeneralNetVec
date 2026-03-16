@@ -5,6 +5,7 @@ import numpy as np
 from net_vec.algorithum import NetAlg
 from net_vec.vector import Unit
 from net_vec.evaluator import Evaluator
+from net_vec.logger import logger
 
 class Partical:
     def __init__(self):
@@ -119,7 +120,8 @@ class PSO(NetAlg):
         优化一个本地拓扑
         """
         # Evaluate for group best
-        for p in partical_list:
+        for i in range(self.grp_size):
+            p = partical_list[i]
             new_dis = self.evaluator.evaluate(p.x)
 
             if new_dis < p.indi_bestx_dis:
@@ -129,11 +131,13 @@ class PSO(NetAlg):
             if new_dis < self.grp_bestx_dis[grp_index]:
                 self.grp_bestx[grp_index] = p.x
                 self.grp_bestx_dis[grp_index] = new_dis
+                self.grp_bestx_index[grp_index] = i
         # Update partical velocity and position
         for p in partical_list:
             self._update_V(p, self.grp_bestx[grp_index])
             self._update_X(p)
     
+    @logger.update_logger
     def _update(self):
         for i in range(self.grp_num):
             st = i * self.grp_size
@@ -141,17 +145,20 @@ class PSO(NetAlg):
             self._update_group(self.swarm[st:ed], i)
             
             # 如果组内找到的最好要好于全局，则更新全局最好信息
-            if self.grp_bestx_dis[i] < self.global_bestx_dis:
-                self.global_bestx = self.grp_bestx[i]
-                self.global_bestx_dis = self.grp_bestx_dis[i]
+            if self.grp_bestx_dis[i] < self.glob_best_x_dis:
+                index = self.grp_bestx_index[i] + st
+                self._update_glob_best_x(
+                    self.grp_bestx[i],
+                    self.grp_bestx_dis[i],
+                    index
+                    )
     
+
     def execute(self):
         # initialize
         self.grp_bestx = [None] * self.grp_num # type: list[Unit]
         self.grp_bestx_dis = [np.inf] * self.grp_num
-
-        self.glob_bestx = None
-        self.glob_bestx_dis = np.inf
+        self.grp_bestx_index = [-1] * self.grp_num
 
         self.swarm = []
         for _ in range(self.swarm_size):
@@ -162,13 +169,13 @@ class PSO(NetAlg):
         while True:
             self._update()
             
-            glob_bestx_dis_list.append(self.global_bestx_dis)
+            glob_bestx_dis_list.append(self.glob_best_x_dis)
             iter += 1
             if iter >= self.iter:
                 break
         # 算法迭代结束，提取最好的结果
-        cur_end_time = self.global_bestx.mal[-1][0]
+        cur_end_time = self.glob_best_x.mal[-1][0]
         ics_time = cur_end_time - float(self.cfg.pkt_list[-1].time)
 
-        return ics_time, cur_end_time, self.global_bestx, self.glob_bestx_dis, glob_bestx_dis_list
+        return ics_time, cur_end_time, self.glob_best_x, self.glob_best_x_dis, glob_bestx_dis_list
         

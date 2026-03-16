@@ -15,6 +15,9 @@ class Evaluator:
         self.cfg = cfg
         with open(mimic_set_file, "rb") as f:
             self.cfg.mimic_set = np.load(f)
+        # logger API
+        self.feature = None # type:list
+        self.all_feature = None # type: list
 
     def forward(self, grp_best_pkt_list: PacketList):
         """

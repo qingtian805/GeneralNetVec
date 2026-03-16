@@ -1,8 +1,10 @@
+from copy import deepcopy
 import numpy as np
 from scapy.utils import EDecimal
 from scapy.packet import Packet, Raw
 
 from .config import cfg
+from .vector import Unit
 from .evaluator import Evaluator
 
 class NetAlg:
@@ -16,7 +18,9 @@ class NetAlg:
             cft_time_divider: int = 1000,
             proto_min_lmt: float = 1.,
             data_max_lmt: list = [np.nan, 1500., 1480., 1460.],
-            data_min_lmt: float = 0.
+            data_min_lmt: float = 0.,
+            pkt_list: list[Packet] = None, 
+            last_end_time: EDecimal = None,
         ):
         r"""
         netAlg 网络算法基类，将自动进行一些有关 Unit 类的设置
@@ -50,16 +54,32 @@ class NetAlg:
         # 用于计算构建包与前个包之间的最小时间间隔，DD 代表在构建包与前个包时间间隔中存在多少个可用时间位置
         cfg.cft_time_divider   = cft_time_divider
 
+        self.evaluator = None # type: Evaluator
+        self.glob_best_x = None # type: Unit
+        self.glob_best_x_index = -1 # used by logger to record feature
+        self.glob_best_x_dis = np.inf
+
+        if pkt_list is not None:
+            self.set_pkt_list(pkt_list, last_end_time)
+
+    def _update_glob_best_x(self, new_best_x: Unit, distance: float, index: int):
+        self.glob_best_x = deepcopy(new_best_x)
+        self.glob_best_x_dis = distance
+        self.glob_best_x_index = index
+
     def set_pkt_list(
             self, 
             pkt_list: list[Packet], 
-            last_end_time: EDecimal
+            last_end_time: EDecimal = None
             ):
         """
         设置原始包列表和最后一个包的结束时间, 以便算法使用
         """
         cfg.pkt_list = pkt_list
-        cfg.last_end_time = last_end_time
+        if last_end_time is None:
+            cfg.last_end_time = pkt_list[0].time
+        else:
+            cfg.last_end_time = last_end_time
 
         cfg.pkt_num = len(pkt_list)
         cfg.proto_max_lmt = []
@@ -76,32 +96,19 @@ class NetAlg:
 
             cfg.proto_max_lmt.append(float(proto_layer))
 
+    def _iteration(self):
+        """
+        优化算法单次迭代函数，本函数是算法内部函数，设计在这里方便logger记录
+        迭代历史
+        """
+        pass
 
-    def set_evaluator(self, evaluator: Evaluator):
-        self.evaluator = evaluator
-
-    def execute(self) -> tuple:
+    def execute(self):
         """
         优化算法执行函数，应当包含数据结构初始化在内的算法一切步骤
         约定返回内容数组：
         1. 增加时间
         2. 优化后最后一个包的结束时间
         3. 最佳 Unit
-        4. 最佳 Unit 的评价结果
-        5. 最佳 Unit 优化历史（距离记录）
         """
-        pass
-
-if __name__ == "__main__":
-    from scapy.utils import rdpcap
-    with open("test.pcap", "rb") as f:
-        pkt_list = rdpcap(f)
-
-    alg = NetAlg(pkt_list, pkt_list[-1].time)
-
-    for name, value in cfg.__dict__.items():
-        print(name, value)
-    print()
-
-    for name, value in alg.__dict__.items():
-        print(name, value)
+        return np.nan, np.nan, Unit()
