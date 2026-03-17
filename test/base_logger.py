@@ -8,7 +8,7 @@ class TestAlg(NetAlg):
     def __init__(self):
         pass
     
-    @logger.update_logger
+    @logger.iteration_logger
     def update(self):
         self.glob_best_x = 1
         self.glob_best_x_dis = 0.5
@@ -22,6 +22,7 @@ class TestEval(Evaluator):
     def evaluate(self, x):
         self.feature = [1,2]
         self.all_feature = [1,2,3]
+        return 1
 
 test_eval = TestEval()
 test_algo = TestAlg()

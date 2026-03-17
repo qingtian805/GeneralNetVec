@@ -4,7 +4,6 @@ import numpy as np
 
 from net_vec.algorithum import NetAlg
 from net_vec.vector import Unit
-from net_vec.evaluator import Evaluator
 from net_vec.logger import logger
 
 class Partical:
@@ -18,25 +17,18 @@ class Partical:
         # 最佳评价
         self.indi_bestx_dis = np.inf
 
-    
-class PSO(NetAlg):
+
+class LBPSO(NetAlg):
     def __init__(
-            self, 
-            max_cft_pkt = 1, 
-            max_cft_pkt_prob = 0.01, 
-            max_time_extend = 6., 
-            min_time_extend = 3., 
-            fence_time_divider = 10000, 
-            cft_time_divider = 1000, 
-            proto_min_lmt = 1, 
-            data_max_lmt = [np.nan, 1500., 1480., 1460.], 
-            data_min_lmt = 0,
+            self,
             w: float = 0.7298,
             c1: float = 1.49618,
             c2: float = 1.49618,
             iter: int = 3,
             swarm_size: int = 6,
             grp_size: int = 3,
+            *args,
+            **kwargs
             ):
         """
         本地拓扑PSO算法
@@ -48,10 +40,8 @@ class PSO(NetAlg):
         :param swarm_size: 粒子群大小
         :param grp_size: 每组粒子数量
         """
-        super().__init__(max_cft_pkt, max_cft_pkt_prob, 
-                         max_time_extend, min_time_extend, fence_time_divider, cft_time_divider, 
-                         proto_min_lmt, data_max_lmt, data_min_lmt)
-        
+        super().__init__(*args, **kwargs)
+
         self.w = w
         self.c1 = c1
         self.c2 = c2
@@ -60,7 +50,17 @@ class PSO(NetAlg):
         self.grp_size = grp_size
 
         self.grp_num = swarm_size // grp_size
-        
+
+    def get_paramter(self):
+        return {
+            "w": self.w,
+            "c1": self.c1,
+            "c2": self.c2,
+            "iter": self.iter,
+            "swarm_size": self.swarm_size,
+            "grp_size": self.grp_size,
+            }
+
     def _generate_V(self, x: Unit, best_x: Unit):
         """生成指向最优解的方向 V, 即计算
 
@@ -80,7 +80,7 @@ class PSO(NetAlg):
         # v.craft = best_x.craft - x.craft
 
         return v
-    
+
     def _update_V(self, p: Partical, grp_bestx: Unit):
         """
 
@@ -88,7 +88,7 @@ class PSO(NetAlg):
         # social V
         soc_V = self._generate_V(p.x, grp_bestx)
         # congitive V
-        cog_V = self._generate_V(p.x, p.indi_bestx) 
+        cog_V = self._generate_V(p.x, p.indi_bestx)
 
         r1 = random.random()
         r2 = random.random()
@@ -114,7 +114,7 @@ class PSO(NetAlg):
         p.x.restrict()
 
         return p
-        
+
     def _update_group(self, partical_list: list[Partical], grp_index):
         """
         优化一个本地拓扑
@@ -136,14 +136,14 @@ class PSO(NetAlg):
         for p in partical_list:
             self._update_V(p, self.grp_bestx[grp_index])
             self._update_X(p)
-    
-    @logger.update_logger
-    def _update(self):
+
+    @logger.iteration_logger
+    def _iteration(self):
         for i in range(self.grp_num):
             st = i * self.grp_size
             ed = (i + 1) * self.grp_size
             self._update_group(self.swarm[st:ed], i)
-            
+
             # 如果组内找到的最好要好于全局，则更新全局最好信息
             if self.grp_bestx_dis[i] < self.glob_best_x_dis:
                 index = self.grp_bestx_index[i] + st
@@ -152,7 +152,7 @@ class PSO(NetAlg):
                     self.grp_bestx_dis[i],
                     index
                     )
-    
+
 
     def execute(self):
         # initialize
@@ -167,8 +167,8 @@ class PSO(NetAlg):
 
         # start iteration
         while True:
-            self._update()
-            
+            self._iteration()
+
             glob_bestx_dis_list.append(self.glob_best_x_dis)
             iter += 1
             if iter >= self.iter:
@@ -178,4 +178,3 @@ class PSO(NetAlg):
         ics_time = cur_end_time - float(self.cfg.pkt_list[-1].time)
 
         return ics_time, cur_end_time, self.glob_best_x, self.glob_best_x_dis, glob_bestx_dis_list
-        

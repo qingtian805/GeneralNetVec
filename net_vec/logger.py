@@ -1,5 +1,6 @@
 import numpy as np
 
+from copy import deepcopy
 from net_vec.config import cfg
 from net_vec.algorithum import NetAlg
 from net_vec.evaluator import Evaluator
@@ -13,8 +14,8 @@ class Logger:
         初始化后，请使用 set_evaluator 和 set_algoritum 函数分别传入正在使用的
         算法实例和评价器实例。
         """
-        self.best_x_feature = None
-        self.best_x_all_feature = None
+        self.best_x_feature = None # type: list
+        self.best_x_all_feature = None # type: list
         self.best_x_dis_hist = []
         self.avg_dis_hist = []
 
@@ -68,5 +69,28 @@ class Logger:
 
             return res
         return wapper
+    
+    def get_log(self):
+        """
+        返回列表：
+        1. 特征
+        2. 全部特征
+        3. 距离历史
+        4. 平均距离历史
+        """
+
+        return (
+            self.best_x_feature,
+            self.best_x_all_feature,
+            deepcopy(self.best_x_dis_hist),
+            deepcopy(self.avg_dis_hist)
+        )
+    
+    def clear(self):
+        self.best_x_feature = None
+        self.best_x_all_feature = None
+        self.best_x_dis_hist.clear()
+        self.avg_dis_hist.clear()
+
         
 logger = Logger()

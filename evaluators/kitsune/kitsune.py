@@ -100,7 +100,7 @@ class KitsuneEval(Evaluator):
             self.global_FE = Kitsune(rdpcap(init_pcap_in), np.inf)
             RunFE(self.global_FE)
     
-    @logger.evaluate_log
+    @logger.evaluate_logger
     def evaluate(self, x: Unit):
         """
         距离估计函数，计算当前特征与良性流量特征（全部）的 L2 距离(最大最小正则化后)

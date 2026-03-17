@@ -69,7 +69,8 @@ class NetAlg:
             last_end_time: EDecimal = None
             ):
         """
-        设置原始包列表和最后一个包的结束时间, 以便算法使用
+        设置原始包列表和最后一个包的结束时间, 以便分组处理
+        Manipulater API
         """
         cfg.pkt_list = pkt_list
         if last_end_time is None:
@@ -102,6 +103,13 @@ class NetAlg:
         通过本函数返回算法的参数
         """
         return dict()
+    
+    def _iteration(self):
+        """
+        算法实现中应该实现一个轮函数，功能为算法单轮迭代的步骤实现
+        这个函数应该使用 Logger.iteration_logger 修饰
+        """
+        pass
 
     def execute(self):
         """
