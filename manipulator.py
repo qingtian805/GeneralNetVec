@@ -75,6 +75,9 @@ class Manipulator:
         last_end_time = self.pkt_list[0].time
         acc_ics_time = 0.
 
+        if end is None:
+            end = len(self.pkt_list)
+
         for st in range(start, end, self.grp_pkt_num):
             ed = st + self.grp_pkt_num
             grp_pkt_list = self.pkt_list[st:ed]
@@ -87,9 +90,9 @@ class Manipulator:
             acc_time, last_end_time, best_x = self.alg.execute()
 
             acc_ics_time += acc_time
-            self.sta_best_x.append(best_x)
 
             # log status
+            self.sta_best_x.append(best_x)
             feature, all_feature, dis_list, avg_dis_list = logger.get_log()
             logger.clear()
             self.sta_feature_list.append(feature)

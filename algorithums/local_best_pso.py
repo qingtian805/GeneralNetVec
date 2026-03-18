@@ -163,13 +163,12 @@ class LBPSO(NetAlg):
         self.swarm = []
         for _ in range(self.swarm_size):
             self.swarm.append(Partical())
-        glob_bestx_dis_list = []
 
         # start iteration
+        iter = 0
         while True:
             self._iteration()
 
-            glob_bestx_dis_list.append(self.glob_best_x_dis)
             iter += 1
             if iter >= self.iter:
                 break
@@ -177,4 +176,4 @@ class LBPSO(NetAlg):
         cur_end_time = self.glob_best_x.mal[-1][0]
         ics_time = cur_end_time - float(self.cfg.pkt_list[-1].time)
 
-        return ics_time, cur_end_time, self.glob_best_x, self.glob_best_x_dis, glob_bestx_dis_list
+        return ics_time, cur_end_time, self.glob_best_x

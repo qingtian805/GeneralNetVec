@@ -106,7 +106,11 @@ class Unit:
             for j in range(int(round(self.mal[i][1]))):
                 # 构造包复制原始封包
                 pkt = copy.deepcopy(cfg.pkt_list[i])
-                pkt_layers = pkt.layers().remove(Raw)
+                pkt_layers = pkt.layers()
+
+                if pkt.haslayer(Raw):
+                    pkt_layers.remove(Raw)
+                    
                 pkt_layer_num = len(pkt_layers)
                 target_layer_num = round(self.craft[i][j][1])
 
@@ -117,7 +121,7 @@ class Unit:
                     raise RuntimeError("Error when rebuilding Unit!")
                 
                 # 清除原有负载，不清除头，保证构造包与原始包发送到同一主机
-                pkt[pkt_layers[target_layer_num]].remove_payload()
+                pkt[pkt_layers[target_layer_num - 1]].remove_payload()
 
                 # 添加随机内容，内容长度被 MTU 限制
                 pkt.add_payload(random_bytes(int(round(self.craft[i][j][2]))))
@@ -191,7 +195,7 @@ class Unit:
                     self.craft[i][j][1] = cfg.proto_min_lmt
 
                 # mtu check
-                if self.craft[i][j][2] > cfg.data_max_lmt:
+                if self.craft[i][j][2] > cfg.data_max_lmt[round(self.craft[i][j][1])]:
                     self.craft[i][j][2] = cfg.data_max_lmt[round(self.craft[i][j][1])]
                 elif self.craft[i][j][2] < cfg.data_min_lmt:
                     self.craft[i][j][2] = cfg.data_min_lmt
@@ -212,6 +216,9 @@ class Unit:
             ret.craft = self.craft + other
         return ret
     
+    def __radd__(self, other):
+        return self.__add__(other)
+    
     def __sub__(self, other):
         ret = Unit()
         if isinstance(other, Unit):
@@ -221,6 +228,8 @@ class Unit:
             ret.mal = self.mal - other
             ret.craft = self.craft - other
         return ret
+    def __rsub__(self, other):
+        return self.__sub__(other)
     
     def __mul__(self, other):
         ret = Unit()
@@ -231,6 +240,8 @@ class Unit:
             ret.mal = self.mal * other
             ret.craft = self.craft * other
         return ret
+    def __rmul__(self, other):
+        return self.__mul__(other)
     
     def __truediv__(self, other):
         ret = Unit()
