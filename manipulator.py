@@ -1,7 +1,7 @@
 import time
 import numpy as np
 from pickle import dump
-from scapy.utils import rdpcap
+from scapy.utils import rdpcap, wrpcap
 from scapy.utils import EDecimal
 
 from net_vec.algorithum import NetAlg
@@ -16,7 +16,6 @@ class Manipulator:
             algorithum: NetAlg, 
             evaluator: Evaluator, 
             grp_pkt_num: int,
-            sta_path: str
             ):
         
         with open(mal_pcap_file, "rb") as f:
@@ -31,7 +30,6 @@ class Manipulator:
         self.alg.evaluator = evaluator
         
         self.grp_pkt_num = grp_pkt_num
-        self.sta_path = sta_path
 
         self.sta_best_x = []
         self.sta_feature_list = []
@@ -54,13 +52,22 @@ class Manipulator:
         
         f.close()
 
-    def dump_sta(self):
-        with open(self.sta_path, "wb") as f:
+    def dump_sta(self, sta_path):
+        with open(sta_path, "wb") as f:
             dump(self.sta_best_x, f)
             dump(self.sta_feature_list, f)
             dump(self.sta_all_feature_list, f)
             dump(self.sta_glob_dis_list, f)
             dump(self.sta_avg_dis_list, f)
+        
+    def dump_pkt_list(self, pcap_path):
+        pkt_list = []
+        for x in self.sta_best_x:
+            pkt_list += x.rebuild()
+
+        with open(pcap_path, "wb") as f:
+            wrpcap(f, pkt_list)
+
 
     def manipulate(
             self,
