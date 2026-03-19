@@ -154,8 +154,9 @@ class KitsuneEval(Evaluator):
         norm_feature = self.normalizer.transform(feature)
 
         # 计算每个特征与对应目标特征的 l2 距离（范数），取最小值作为评价指标
+        dis = 0
         for i in range(self.cfg.pkt_num):
-            dis = min(np.linalg.norm(norm_feature[i] - self.cfg.mimic_set,
+            dis += min(np.linalg.norm(norm_feature[i] - self.cfg.mimic_set,
                                      axis=1)) 
 
         return dis

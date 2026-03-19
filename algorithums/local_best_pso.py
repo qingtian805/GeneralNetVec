@@ -1,5 +1,5 @@
 import random
-import math
+from copy import deepcopy
 import numpy as np
 
 from net_vec.algorithum import NetAlg
@@ -129,7 +129,7 @@ class LBPSO(NetAlg):
                 p.indi_bestx_dis = new_dis
 
             if new_dis < self.grp_bestx_dis[grp_index]:
-                self.grp_bestx[grp_index] = p.x
+                self.grp_bestx[grp_index] = deepcopy(p.x)
                 self.grp_bestx_dis[grp_index] = new_dis
                 self.grp_bestx_index[grp_index] = i
         # Update partical velocity and position
@@ -156,6 +156,7 @@ class LBPSO(NetAlg):
 
     def execute(self):
         # initialize
+        self._reset_glob_best_x()
         self.grp_bestx = [None] * self.grp_num # type: list[Unit]
         self.grp_bestx_dis = [np.inf] * self.grp_num
         self.grp_bestx_index = [-1] * self.grp_num

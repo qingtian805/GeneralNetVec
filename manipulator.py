@@ -60,10 +60,17 @@ class Manipulator:
             dump(self.sta_glob_dis_list, f)
             dump(self.sta_avg_dis_list, f)
         
-    def dump_pkt_list(self, pcap_path):
+    def dump_pkt_list(self, pcap_path, start = 0, end = None):
+        if end is None:
+            end = len(self.pkt_list)
+
         pkt_list = []
-        for x in self.sta_best_x:
-            pkt_list += x.rebuild()
+        i = -1
+        for st in range(start, end, self.grp_pkt_num):
+            ed = st + self.grp_pkt_num
+            i += 1
+            self.alg.set_pkt_list(self.pkt_list[st: ed])
+            pkt_list += self.sta_best_x[i].rebuild()
 
         with open(pcap_path, "wb") as f:
             wrpcap(f, pkt_list)
@@ -87,12 +94,12 @@ class Manipulator:
 
         for st in range(start, end, self.grp_pkt_num):
             ed = st + self.grp_pkt_num
+            print(f"Processing packet num {st}-{ed}...")
             grp_pkt_list = self.pkt_list[st:ed]
 
             for p in grp_pkt_list:
                 p.time = p.time + acc_ics_time
-
-            self.alg.set_pkt_list(self.pkt_list[st:ed], last_end_time)
+            self.alg.set_pkt_list(grp_pkt_list, last_end_time)
 
             acc_time, last_end_time, best_x = self.alg.execute()
 

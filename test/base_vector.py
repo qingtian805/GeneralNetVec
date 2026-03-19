@@ -11,9 +11,9 @@ alg = NetAlg()
 alg.set_pkt_list(pkt_list, pkt_list[0].time)
 
 t = Unit()
+t.initialize()
 
-print(t.mal)
-print(t.craft)
+print(t.mal[0][0] - pkt_list[0].time)
 
 t.restrict()
 

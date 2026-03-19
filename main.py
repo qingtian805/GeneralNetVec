@@ -10,7 +10,8 @@ algorithum = LBPSO(
     swarm_size=6,
     grp_size=3
 )
-algorithum.cfg
+# If you want to config paramters, use below
+#algorithum.cfg
 
 evaluator = KitsuneEval(
     model_save_path="TrafficManipulator/example/model.pkl",

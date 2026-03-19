@@ -97,6 +97,11 @@ class NetAlg:
         self.glob_best_x = deepcopy(new_best_x)
         self.glob_best_x_dis = distance
         self.glob_best_x_index = index
+
+    def _reset_glob_best_x(self):
+        self.glob_best_x = None
+        self.glob_best_x_dis = np.inf
+        self.glob_best_x_index = -1
     
     def get_paramter(self):
         """
@@ -113,7 +118,8 @@ class NetAlg:
 
     def execute(self):
         """
-        优化算法执行函数，应当包含数据结构初始化在内的算法一切步骤
+        优化算法执行函数，应当包含数据结构初始化在内的算法一切步骤.
+
         约定返回内容数组：
         1. 增加时间
         2. 优化后最后一个包的结束时间
