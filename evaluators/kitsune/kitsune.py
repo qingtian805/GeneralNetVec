@@ -95,6 +95,10 @@ class KitsuneEval(Evaluator):
             ):
         
         """
+        本类使用 AfterImage 特征提取器的特征作为评价指标。
+        
+        AfterImage 特征提取器是 Kitsune NIDS 的一部分，为了理解方便，命名为 Kitsune 评价器
+
         :param model_save_path: Kitsune 模型存储的路径，需要其中包含 Feature Mapper.(附加说明，这个文件一般包含四个内容)：
                                 1. Feature Mapper 参数
                                 2. 聚合层参数（多个小AE）
