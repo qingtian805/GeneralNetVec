@@ -134,7 +134,7 @@ class KitsuneEval(Evaluator):
         :rtype: Any
         """
 
-        self.pktList = x.rebuild()
+        pktList = x.rebuild()
 
         mal_pos = []
         cft_num = 0
@@ -146,7 +146,7 @@ class KitsuneEval(Evaluator):
         # Rollback flag is designed to restore status in low level(in order to be fast)
         # In detail: it will run rollback() when first time running proc_next_packet() in Kitsune
         # and backup() will be called, which will restore status stored in backup1 and backup2
-        local_FE = Kitsune(self.pktList, np.inf, True)
+        local_FE = Kitsune(pktList, np.inf, True)
         local_FE.FE.nstat = safelyCopyNstat(self.global_FE.FE.nstat, True)
         feature, all_feature = RunFE(local_FE, origin_pos=mal_pos)
 

@@ -36,6 +36,7 @@ class Manipulator:
         self.sta_all_feature_list = []
         self.sta_glob_dis_list = []
         self.sta_avg_dis_list = []
+        self.best_pkt_list = []
 
     def save_config(self, save_path):
         f = open(save_path, "a")
@@ -60,20 +61,9 @@ class Manipulator:
             dump(self.sta_glob_dis_list, f)
             dump(self.sta_avg_dis_list, f)
         
-    def dump_pkt_list(self, pcap_path, start = 0, end = None):
-        if end is None:
-            end = len(self.pkt_list)
-
-        pkt_list = []
-        i = -1
-        for st in range(start, end, self.grp_pkt_num):
-            ed = st + self.grp_pkt_num
-            i += 1
-            self.alg.set_pkt_list(self.pkt_list[st: ed])
-            pkt_list += self.sta_best_x[i].rebuild()
-
+    def dump_pkt_list(self, pcap_path):
         with open(pcap_path, "wb") as f:
-            wrpcap(f, pkt_list)
+            wrpcap(f, self.best_pkt_list)
 
 
     def manipulate(
@@ -105,7 +95,12 @@ class Manipulator:
 
             acc_ics_time += acc_time
 
+            # Prepare evaluator for next group
+            new_pkt_list = best_x.rebuild()
+            self.eval.forward(new_pkt_list)
+
             # log status
+            self.best_pkt_list += new_pkt_list
             self.sta_best_x.append(best_x)
             feature, all_feature, dis_list, avg_dis_list = logger.get_log()
             logger.clear()
