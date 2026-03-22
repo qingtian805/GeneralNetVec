@@ -7,6 +7,6 @@ Kitsune 评估器模块
 
 import os, sys
 sys.path.append(os.path.split(__file__)[0])
-from .kitsune import KitsuneEval, KNnormalizer
+from .kitsune import KitsuneEval
 
-__all__ = ['KitsuneEval', 'KNnormalizer']
+__all__ = ['KitsuneEval']
