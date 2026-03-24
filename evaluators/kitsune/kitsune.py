@@ -35,9 +35,9 @@ class KNnormalizer:
 
     def fit_transform(self, X):
         """对X中的数据执行最大-最小正则化(0-1 Normalize), 同时初始化自身最大最小值
-        
+
         :param X: 说明
-        :type X: 
+        :type X:
         :return: 说明
         :rtype: NDArray
         """
@@ -54,7 +54,7 @@ class KNnormalizer:
                 # 0-1 normalize
                 x = (x - self.norm_min[j]) / (
                     self.norm_max[j] - self.norm_min[j] + 0.0000000000000001)
-                
+
                 train_feature = np.concatenate((train_feature, x))
 
             train_Feature.append(train_feature)
@@ -71,32 +71,32 @@ class KNnormalizer:
 
     def transform(self, X):
         """transform 对X中的数据执行最大-最小正则化(0-1 Normalize)
-        
+
         :param X: 说明
-        :type X: 
+        :type X:
         :return: 说明
         :rtype: Any"""
         X = np.array(X)
         # 0-1 normalize
         X[:, self.FM] = (X[:, self.FM] - self.norm_min) / (
             self.norm_max - self.norm_min + 0.0000000000000001)
-        
+
         return X
-    
+
 class KitsuneEval(Evaluator):
     def __init__(
-            self, 
-            model_save_path: str, 
-            feature_path: str, 
-            fm_grace: int, 
+            self,
+            model_save_path: str,
+            feature_path: str,
+            fm_grace: int,
             ad_grace: int,
             mimic_set: np.ndarray,
             init_pcap_in: str = None
             ):
-        
+
         """
         本类使用 AfterImage 特征提取器的特征作为评价指标。
-        
+
         AfterImage 特征提取器是 Kitsune NIDS 的一部分，为了理解方便，命名为 Kitsune 评价器
 
         :param model_save_path: Kitsune 模型存储的路径，需要其中包含 Feature Mapper.(附加说明，这个文件一般包含四个内容)：
@@ -108,9 +108,9 @@ class KitsuneEval(Evaluator):
         :param fm_grace: 训练特征提取器的包数量，用于模拟在 Kitsune 运行过程中最大最小值的变化
         :param ad_grace: 训练入侵检测其的包数量，用于模拟在 Kitsune 运行过程中最大最小值的变化
         :param mimic_set: 被模拟的良性流量特征
-        :param init_pcap_in: 
+        :param init_pcap_in:
         """
-        
+
         super().__init__(mimic_set)
 
         self.normalizer = KNnormalizer(model_save_path)
@@ -122,7 +122,7 @@ class KitsuneEval(Evaluator):
         else:
             self.global_FE = Kitsune(rdpcap(init_pcap_in), np.inf)
             RunFE(self.global_FE)
-    
+
     @logger.evaluate_logger
     def evaluate(self, x: Unit):
         """
@@ -161,10 +161,10 @@ class KitsuneEval(Evaluator):
         dis = 0
         for i in range(self.cfg.pkt_num):
             dis += min(np.linalg.norm(norm_feature[i] - self.cfg.mimic_set,
-                                     axis=1)) 
+                                     axis=1))
 
         return dis
-    
+
     def forward(self, best_pkt_list: PacketList):
         """
         令 Feature Extractor 在 best_pkt_list 上运行，过程不返回结果
@@ -175,4 +175,3 @@ class KitsuneEval(Evaluator):
         self.global_FE = Kitsune(best_pkt_list, np.inf, False)
         self.global_FE.FE.nstat = safelyCopyNstat(nstat, False)
         RunFE(self.global_FE)
-        
