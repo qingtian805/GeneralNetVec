@@ -1,5 +1,4 @@
 import pickle as pkl
-from scapy.utils import rdpcap
 import numpy as np
 
 from .Kitsune.KitNET.KitNET import KitNET
@@ -28,7 +27,7 @@ class KitsuneExam(Examinator):
 
     @staticmethod
     def load_model(model_save_path):
-        exam = KitsuneExam()
+        exam = __class__()
         exam.model_save_path = model_save_path
 
         with open(model_save_path, "rb") as f:
@@ -64,7 +63,6 @@ class KitsuneExam(Examinator):
         self.FE = FE(train_pcap, limit)
         self.KitNET = KitNET(self.FE.get_num_features(), max_autoencoder_size, FM_grace, AD_grace)
 
-        loop = 0
         self.abnormal_thresh = -np.inf
         while True:
             rmse = self._run_model()
@@ -74,21 +72,18 @@ class KitsuneExam(Examinator):
             if rmse > self.abnormal_thresh:
                 self.abnormal_thresh = rmse
 
-            loop += 1
-
         # Save and store status
         self.save_model(model_save_path)
         self.model_save_path = model_save_path
         self.n_trained = self.KitNET.n_trained
 
-    def exam_pcap(self, pcap_file, limit = np.inf):
+    def exam(self, pcap_file: str, limit = np.inf):
         # Restore Kitsune status
         self.FE = FE(pcap_file, limit)
         self.KitNET.n_trained = self.n_trained
 
-        loop = 0
         rmse_list = []
-        while loop < limit:
+        while True:
             rmse = self._run_model()
             if rmse == -1:
                 break
