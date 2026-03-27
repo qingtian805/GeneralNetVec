@@ -59,6 +59,9 @@ class KitsuneExam(Examinator):
             max_autoencoder_size: int = 10,
             FM_grace: int = 5000,
             AD_grace: int = 50000):
+        """
+        :param max_autoencoder_size: 定义 Kitsune 使用最多多少个
+        """
 
         self.FE = FE(train_pcap, limit)
         self.KitNET = KitNET(self.FE.get_num_features(), max_autoencoder_size, FM_grace, AD_grace)
@@ -77,7 +80,7 @@ class KitsuneExam(Examinator):
         self.model_save_path = model_save_path
         self.n_trained = self.KitNET.n_trained
 
-    def exam(self, pcap_file: str, limit = np.inf):
+    def exam_pcap(self, pcap_file: str, limit = np.inf):
         # Restore Kitsune status
         self.FE = FE(pcap_file, limit)
         self.KitNET.n_trained = self.n_trained
@@ -93,4 +96,4 @@ class KitsuneExam(Examinator):
         return rmse_list
 
     def get_feature(self, pcap_file, limit = np.inf):
-        self.load_model(self.model_save_path)
+        pass
