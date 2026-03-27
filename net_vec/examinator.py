@@ -10,7 +10,8 @@ class Examinator:
 
         在实现时, 请考虑后续的 load_model 实现
         """
-        pass
+        self.abnormal_thresh = -np.inf
+        self.model_save_path = None
 
     @staticmethod
     def load_model(model_save_path: str):
@@ -45,6 +46,7 @@ class OLExaminator(Examinator):
 
         在线评估器应该包含 exam_pkt 函数, 而非 exam_pcap 函数
         """
+        super().__init__()
         del self.exam_pcap
 
     def exam_pkt(self, pkt_list: Union[list[Packet], PacketList]):

@@ -1,12 +1,11 @@
 import numpy as np
 import pickle as pkl
-# from net_vec.examinator import Examinator
-from examinators import KitsuneExam
+from net_vec.examinator import Examinator
 
 class Exam:
     def __init__(
             self,
-            examinator: KitsuneExam,
+            examinator: Examinator,
             sta_file: str
             ):
         self.examinator = examinator

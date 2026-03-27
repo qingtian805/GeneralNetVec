@@ -1,9 +1,11 @@
 import pickle as pkl
 import numpy as np
+from scapy.plist import PacketList
 
 from .Kitsune.KitNET.KitNET import KitNET
 from .Kitsune.FeatureExtractor import FE
-from net_vec.examinator import Examinator
+from .Kitsune.netStat import netStat
+from net_vec.examinator import Examinator, OLExaminator
 
 class KitsuneExam(Examinator):
     def __init__(self):
@@ -97,3 +99,39 @@ class KitsuneExam(Examinator):
 
     def get_feature(self, pcap_file, limit = np.inf):
         pass
+
+class FEOL(FE):
+    def set_pkt_list(self, pkt_list):
+        self.scapyin = pkt_list
+        self.limit = len(pkt_list)
+        self.curPacketIndx = 0
+
+    def __init__(self, pkt_list):
+        self.nstat = netStat(np.nan, 16777216, 65536)
+        self.parse_type = "scapy"
+
+        self.set_pkt_list(pkt_list)
+
+class OLKitsuneExam(KitsuneExam, OLExaminator):
+    def __init__(self):
+        super().__init__()
+        del self.exam_pcap
+
+    def exam_pkt(self, pkt_list: PacketList):
+        """
+        本类是在线评估器, 不会在每次运行时重新初始化 Feture Extractor
+        """
+        if self.FE is None:
+            self.FE = FEOL()
+        # Set kitsune status, no restore
+        self.FE.set_pkt_list(pkt_list)
+
+        rmse_list = []
+        while True:
+            rmse = self._run_model()
+
+            if rmse == -1:
+                break
+            rmse_list.append(rmse)
+
+        return rmse_list
