@@ -43,6 +43,27 @@ class Exam:
     def _malicious_mimicry_rate(self):
         pass
 
+    def dump_result(self, dump_file_prefix: str):
+        with open(f"{dump_file_prefix}.txt", "w") as f:
+            f.writelines((f"DER: {self.der}",
+                          f"MER: {self.mer}",
+                          f"PDR: {self.pdr}",
+                          f"rmse file saved at {dump_file_prefix}.pkl"))
+            
+        with open(f"{dump_file_prefix}.pkt", "wb") as f:
+            pkl.dump(self.origin_rmse, f)
+            pkl.dump(self.manipu_rmse, f)
+
+    def cal_metrics(self):
+        self.der = self._detection_evasion_rate()
+        self.mer = self._malicious_evasion_rate()
+        self.pdr = self._probability_decline_rate()
+
+        print(f"DER: {self.der}")
+        print(f"MER: {self.mer}")
+        print(f"PDR: {self.pdr}")
+
+
     def exam(
             self,
             origin_pcap_file: str,
@@ -52,10 +73,4 @@ class Exam:
         self.origin_rmse = np.array(self.examinator.exam_pcap(origin_pcap_file, limit))
         self.manipu_rmse = np.array(self.examinator.exam_pcap(manipu_pcap_file, limit))
 
-        der = self._detection_evasion_rate()
-        mer = self._malicious_evasion_rate()
-        pdr = self._probability_decline_rate()
-
-        print(f"DER: {der}")
-        print(f"MER: {mer}")
-        print(f"PDR: {pdr}")
+        self.cal_metrics()

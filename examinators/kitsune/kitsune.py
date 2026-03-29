@@ -1,4 +1,5 @@
 import pickle as pkl
+import os.path as path
 import numpy as np
 from scapy.plist import PacketList
 
@@ -8,12 +9,16 @@ from .Kitsune.netStat import netStat
 from net_vec.examinator import Examinator, OLExaminator
 
 class KitsuneExam(Examinator):
-    def __init__(self):
-        self.KitNET = None # type: KitNET
-        self.FE = None     # type: FE
-        self.abnormal_thresh = -np.inf
-        self.model_save_path = None # type: str
-        self.n_trained = -1
+    def __init__(self, model_save_path: str = None):
+        self.model_save_path = model_save_path # type: str
+        if model_save_path is not None and path.isfile(model_save_path):
+            try:
+                self.load_model()
+            except Exception:
+                self.KitNET = None # type: KitNET
+                self.FE = None     # type: FE
+                self.abnormal_thresh = -np.inf
+                self.n_trained = -1
 
     def save_model(self, model_save_path: str):
         with open(model_save_path, "wb") as f:
@@ -27,22 +32,19 @@ class KitsuneExam(Examinator):
             pkl.dump(self.KitNET.AD_grace_period, f)
             pkl.dump(self.KitNET.n_trained, f)
 
-    @staticmethod
-    def load_model(model_save_path):
-        exam = __class__()
-        exam.model_save_path = model_save_path
+    def load_model(self, model_save_path: str = None):
+        if model_save_path is not None:
+            self.model_save_path = model_save_path
 
-        with open(model_save_path, "rb") as f:
-            exam.abnormal_thresh = pkl.load(f)
+        with open(self.model_save_path, "rb") as f:
+            self.abnormal_thresh = pkl.load(f)
 
-            exam.KitNET = KitNET(pkl.load(f), feature_map=pkl.load(f))
-            exam.KitNET.ensembleLayer = pkl.load(f)
-            exam.KitNET.outputLayer = pkl.load(f)
-            exam.KitNET.FM_grace_period = pkl.load(f)
-            exam.KitNET.AD_grace_period = pkl.load(f)
-            exam.n_trained = exam.KitNET.n_trained = pkl.load(f)
-
-        return exam
+            self.KitNET = KitNET(pkl.load(f), feature_map=pkl.load(f))
+            self.KitNET.ensembleLayer = pkl.load(f)
+            self.KitNET.outputLayer = pkl.load(f)
+            self.KitNET.FM_grace_period = pkl.load(f)
+            self.KitNET.AD_grace_period = pkl.load(f)
+            self.n_trained = self.KitNET.n_trained = pkl.load(f)
 
     def _run_model(self):
         # create feature vector
@@ -106,23 +108,25 @@ class FEOL(FE):
         self.limit = len(pkt_list)
         self.curPacketIndx = 0
 
-    def __init__(self, pkt_list):
-        self.nstat = netStat(np.nan, 16777216, 65536)
+    def __init__(self, pkt_list = None):
+        self.nstat = netStat(np.nan, 16777216, 131072)
         self.parse_type = "scapy"
 
-        self.set_pkt_list(pkt_list)
+        if pkt_list is not None:
+            self.set_pkt_list(pkt_list)
 
 class OLKitsuneExam(KitsuneExam, OLExaminator):
-    def __init__(self):
-        super().__init__()
-        del self.exam_pcap
+    def __init__(self, model_save_path: str = None):
+        super().__init__(model_save_path)
+
+    def prepare_exam(self):
+        self.FE = FEOL() # type: FEOL
 
     def exam_pkt(self, pkt_list: PacketList):
         """
-        本类是在线评估器, 不会在每次运行时重新初始化 Feture Extractor
+        本类是在线评估器, 为了提升速度, 不会检查使用 Feture Extractor 是否为在线版(即处理对象是 pkt_list)
+        这些步骤在函数 prepare_exam 中完成, 请在首次执行 exam_pkt 之前执行
         """
-        if self.FE is None:
-            self.FE = FEOL()
         # Set kitsune status, no restore
         self.FE.set_pkt_list(pkt_list)
 
