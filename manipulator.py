@@ -1,11 +1,8 @@
 import time
-import numpy as np
 from pickle import dump
 from scapy.utils import rdpcap, wrpcap
-from scapy.utils import EDecimal
 
 from net_vec.algorithum import NetAlg
-from net_vec.vector import Unit
 from net_vec.evaluator import Evaluator
 from net_vec.logger import logger
 

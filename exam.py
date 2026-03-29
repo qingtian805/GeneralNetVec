@@ -30,9 +30,9 @@ class Exam:
 
         origin_detectable = len(self.origin_rmse[self.origin_rmse > self.ad_threshold])
         mal_rmse = self.manipu_rmse[mal_pos]
-        mal_mani_detected = len(mal_rmse[mal_rmse < self.ad_threshold])
+        mal_mani_undetected = len(mal_rmse[mal_rmse < self.ad_threshold])
 
-        return 1 - mal_mani_detected / origin_detectable
+        return 1 - mal_mani_undetected / origin_detectable
 
     def _probability_decline_rate(self):
         origin_mean = np.mean(self.origin_rmse)
