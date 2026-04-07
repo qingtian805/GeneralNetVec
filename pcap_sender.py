@@ -13,9 +13,8 @@ class PcapSender:
         self.pkt_list = []
         for pkt in pkts:
             if pkt.haslayer(Ether):
-                # pkt[Ether].src = None
+                pkt[Ether].src = None
                 pkt[Ether].dst = None
-                # pkt[Ether].chksum = None
 
             if pkt.haslayer(IP):
                 pkt[IP].src = None
@@ -44,43 +43,11 @@ class PcapSender:
 if __name__ == "__main__":
     pcap_file = "./test.pcap"
     
-
-    sender = PcapSender(pcap_file, "10.250.138.86", )
+    sender = PcapSender(pcap_file, "192.168.8.56", )
     sender.send()
     # time.sleep(5)
     # sender.send_fast()
 
 # Send test note:
-# The essential datas for sending to destination
-"""
-from scapy.all import *
-
-# p = IP(dst="10.250.138.86")/ICMP()/Raw("XXXXXXXXXXXXXX")
-# p.show()
-# send(p)
-
-p = Ether()/IP(dst="10.250.138.86")/UDP(dport=38881)/Raw("XXXXXXXXXXXXXX")
-p.show()
-sendp(p)
-
-with open("simple_packet.pcap", "rb") as f:
-    pkt_list = rdpcap(f)
-
-# phrase = pkt_list[0]
-
-# p = IP(dst="10.250.138.86").add_payload(pkt_list)
-p = pkt_list[0]
-
-p = pkt_list[0]
-p[Ether].dst = None
-# p[Ether].src = None
-p[IP].dst = "10.250.138.86"
-p[IP].src = None?
-p[IP].chksum = None
-# p[IP].ihl = None
-# p[IP].len = None
-p[UDP].chksum = None
-
-p.show()
-sendp(p)
-"""
+# The essential datas can be different from one to another network
+# Just prepare all fields to be good.
