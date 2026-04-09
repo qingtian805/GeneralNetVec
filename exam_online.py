@@ -1,16 +1,72 @@
 from queue import Queue
 from threading import Thread
-from struct import pack
+from struct import pack, unpack
 import pickle as pkl
+from socket import socket
 from scapy.sendrecv import AsyncSniffer
 
 from exam import Exam
 from net_vec.examinator import OLExaminator
 
-ABORT_MSG = b"ABO"
-ACK_MSG   = b"ACK"
-END_MSG   = b"END"
-START_MSG = b"STA"
+ABORT_HEAD = b"ABO"
+ACK_HEAD   = b"ACK"
+END_HEAD   = b"END"
+START_HEAD = b"STA"
+
+BUFFER_SIZE = 1500
+
+def start_msg(exam_type: str, exam_paramter: dict):
+    """
+    Return a standard START MESSAGE
+
+    b"STA" + message length + len(exam_type) + exam_type + exam_paramter
+    """
+    exam_paramter_dump = pkl.dumps(exam_paramter)
+    message_len = 4 + len(exam_type) + len(exam_paramter_dump)
+
+    return START_HEAD + pack(">I", message_len) + \
+        pack(">I", len(exam_type)) + exam_type + exam_paramter_dump
+
+def abort_msg():
+    """
+    Return a standard ABORT MESSAGE
+
+    b"ABO" + message length(0)
+    """
+    return ABORT_HEAD + pack(">I", 0)
+
+def ack_msg():
+    """
+    Return a standard ACK MESSAGE
+
+    b"ACK" + message length(0)
+    """
+    return ACK_HEAD + pack(">I", 0)
+
+def end_msg():
+    """
+    Return a standard END MESSAGE
+
+    b"END" + message length(0)
+    """
+    return END_HEAD + pack(">I", 0)
+
+def recv_msg(socket: socket):
+    """
+    Recive msg from socket, returns
+    1. msg_type(defined with headers)
+    2. messages inside(None if nothing inside)
+    """
+    msg_type = socket.recv(3)
+    length = unpack(">I", socket.recv(4))[0]
+    msg = b''
+
+    for i in range(10):
+        if BUFFER_SIZE * i >= length:
+            break
+        msg += socket.recv(BUFFER_SIZE)
+    
+    return msg_type, msg
 
 class OnlineExam(Exam):
     def __init__(
@@ -48,9 +104,7 @@ class OnlineExam(Exam):
     def process(self):
         self.examinator.prepare_exam()
         self.batch = []
-        while True:
-            print("buff: {}".format(self.buffer.qsize()))
-            
+        while True:          
             pkt = self.buffer.get()
             if pkt is None:
                 break
@@ -70,11 +124,11 @@ class OnlineExam(Exam):
 
     def exam(self, interface = None ,filter = ""):
         """
-        :param interface: sniff on which interface, defaults to scapy.conf.iface
+        :param interface: sniff on which interface, defaults to scapy.conf.iface, specific with str interface name e.g."eth0"
         :param filter: Berkeley Packet Filter, see [This site](https://www.ibm.com/docs/en/qsip/7.5.0?topic=queries-berkeley-packet-filters)
         """
-        p_thread = Thread(target=self.process)
-        p_thread.start()
+        self.p_thread = Thread(target=self.process)
+        self.p_thread.start()
         
         self.sniffer = AsyncSniffer(prn=self.capture, store=False, filter=filter, iface=interface)
         self.sniffer.start()
@@ -82,6 +136,7 @@ class OnlineExam(Exam):
     def stop(self):
         self.sniffer.stop(join=True)
         self.buffer.put(None)
+        self.p_thread.join()
         self.flush()
     
 class ExamMetricCalculator(Exam):
@@ -116,10 +171,20 @@ class ExamMetricCalculator(Exam):
 if __name__ == "__main__":
     from examinators import OLKitsuneExam
     from time import sleep
+    
     exam = OLKitsuneExam("./exam_res/kitsune/model.pkl")
-    e = OnlineExam(exam, batch_size=20, buffer_size=10)
+    e = OnlineExam(exam, batch_size=20, buffer_size=0)
 
-    e.exam()
-    sleep(2)
+    # e.exam()
+    # sleep(2)
+    # e.stop()
+    # print(len(e.rmse_list))
+    t = Thread(target=e.exam)
+    t.start()
+    sleep(1)
     e.stop()
+    if t.is_alive():
+        print("Thread not stop!")
+
     print(len(e.rmse_list))
+
