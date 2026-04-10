@@ -15,7 +15,7 @@ START_HEAD = b"STA"
 
 BUFFER_SIZE = 1500
 
-def start_msg(exam_type: str, exam_paramter: dict):
+def start_msg(exam_type: str = None, exam_paramter: dict = None):
     """
     Return a standard START MESSAGE
 
