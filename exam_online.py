@@ -53,9 +53,10 @@ def end_msg():
 
 def recv_msg(socket: socket):
     """
-    Recive msg from socket, returns
+    Recive a standard msg from socket, returns
+    
     1. msg_type(defined with headers)
-    2. messages inside(None if nothing inside)
+    2. messages inside(b'' if nothing inside)
     """
     msg_type = socket.recv(3)
     length = unpack(">I", socket.recv(4))[0]

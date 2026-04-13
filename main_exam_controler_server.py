@@ -3,7 +3,7 @@ from socket import socket
 from struct import pack, unpack
 from pickle import loads, dumps
 from threading import Thread
-from enum import Enum
+from enum import Enum, auto
 from typing import Callable
 
 import examinators
@@ -18,16 +18,41 @@ from exam_online import (
     )
 
 BUFFER_SIZE = 1500
-STOP_TIMEOUT = 5
+STOP_TIMEOUT = 10
 EXAM_THREAD = None # type: Thread | None
 INTERFACE = "wlp0s20f3"
+HOST, PORT = "localhost", 9999
+
 
 class Status(Enum):
-    IDLE = 0
-    RUNNING = 1
-    SAVING = 2
+    IDLE      = auto()
+    WAIT_RUN  = auto()
+    RUNNING   = auto()
+    FIN_EXAM  = auto()
+    WAIT_STOP = auto()
+    WAIT_SAVE = auto()
+    SAVING    = auto()
+    FIN_SAVE  = auto()
+    ABORTING  = auto()
+
+class Event(Enum):
+    NET_ACK   = auto()
+    NET_START = auto()
+    NET_END   = auto()
+    NET_ABORT = auto()
+    LOC_FIN   = auto()
+    
 
 class ExamHandler(BaseRequestHandler):
+    def _nop(self, msg: bytes):
+        pass
+
+    def _send_ack(self, msg: bytes):
+        """
+        DO NOT call this to send ack.
+        """
+        self.request.sendall(ack_msg())
+
     def _start(self, msg: bytes):
         """
         START subhandler
@@ -50,58 +75,48 @@ class ExamHandler(BaseRequestHandler):
 
         # Start Protocal
         self.request.sendall(ack_msg())
-
-        msg, _ = recv_msg(self.request)
-        if not msg == ACK_HEAD:
-            return -1
         return 0
-    
-    def _save(self):
-        """
-        SAVING subhandler
-        """
-        # START Protocal
-        self.request.sendall(start_msg(self.exam_type, self.exam_paramters))
-        
-        msg_type, _ = recv_msg(self.request)
-        if msg_type != ACK_HEAD:
-            return -1
-        
-        self.request.sendall(ack_msg())
 
-        # Dumping result
-        self.request.sendall(dumps(self.exam.rmse_list))
-
-        # END Protocal
-        self.request.sendall(end_msg())
-        msg_type, _ = recv_msg(self.request)
-        if msg_type != ACK_HEAD:
-            return -1
-        
-        self.request.sendall(ack_msg())
-        self.status = Status.IDLE
-
-    def _end(self, msg: bytes):
+    def _exam_end(self, msg: bytes):
         """
         END subhandler
-        """
-        if self.status != Status.RUNNING:
-            return -1
-        
+        """  
         # Stop exam process
         self.exam.stop()
-        EXAM_THREAD.join(timeout=STOP_TIMEOUT)
-        if EXAM_THREAD.is_alive():
-            return -1
         
         # END protocl
         self.request.sendall(ack_msg())
+        return 0
+    
+    def _prep_save(self):
+        global EXAM_THREAD
+        EXAM_THREAD.join(STOP_TIMEOUT)
 
-        msg, _ = recv_msg(self.request)
-        if msg != ACK_HEAD:
+        if EXAM_THREAD.is_alive():
             return -1
+        
+        self.transit(Event.LOC_FIN)
+    
+    def _start_save(self):
+        self.request.sendall(start_msg(self.exam_type, self.exam_paramters))
 
-        self._save()
+    def _save(self):
+        """
+        SAVING subhandler
+        This handler sends rmse_list to remote client. When finished,
+        it triggers LOC_FIN event
+        """
+        self.request.sendall(ack_msg())
+        # Dumping result
+        self.request.sendall(dumps(self.exam.rmse_list))
+
+        self.transit(Event.LOC_FIN)
+
+    def _save_end(self):
+        """
+        What to do when all data sent? It triggers END protocal to client
+        """
+        self.request.sendall(end_msg())
 
     def _abort(self, msg: bytes):
         """
@@ -117,36 +132,60 @@ class ExamHandler(BaseRequestHandler):
         if EXAM_THREAD.is_alive():
             return -1
 
-        self.status = Status.IDLE
         self.request.sendall(ack_msg())
-
-        msg, _ = recv_msg(self.request)
-        if msg != ACK_HEAD:
-            return -1
-
         
     def __init__(self, request, client_address, server):
         super().__init__(request, client_address, server)
 
         self.status = Status.IDLE
         self.transations = {
-            (Status.IDLE   , START_HEAD): (Status.RUNNING, self._start),
-            (Status.RUNNING, END_HEAD  ): (Status.SAVING , self._end  ),
-            (Status.RUNNING, ABORT_HEAD): (Status.IDLE   , self._abort),
-        } # type: dict[tuple[Status, bytes], tuple[Status, Callable]]
+            # Start transations
+            (Status.IDLE,      Event.NET_START): (Status.WAIT_RUN,  self._start),
+            (Status.WAIT_RUN,  Event.NET_ACK)  : (Status.RUNNING,   self._nop),
+            # End trasations
+            (Status.RUNNING,   Event.NET_END)  : (Status.FIN_EXAM,  self._exam_end),
+            (Status.FIN_EXAM,  Event.NET_ACK)  : (Status.WAIT_STOP, self._prep_save),
+            # Start saving
+            (Status.WAIT_STOP, Event.LOC_FIN)  : (Status.WAIT_SAVE, self._start_save),
+            (Status.WAIT_SAVE, Event.NET_ACK)  : (Status.SAVING,    self._save),
+            # Finish saving
+            (Status.SAVING,    Event.LOC_FIN)  : (Status.FIN_SAVE,  self._save_end),
+            (Status.FIN_SAVE,  Event.NET_ACK)  : (Status.IDLE,      self._send_ack),
+            # Aborting
+            (Status.RUNNING,   Event.NET_ABORT): (Status.ABORTING,  self._abort),
+            (Status.ABORTING,  Event.NET_ACK)  : (Status.IDLE,      self._nop)
+        } # type: dict[tuple[Status, Event], tuple[Status, Callable]]
 
-    def handle(self):
-        msg_type, msg = recv_msg(self.request)
-
+    def transit(self, event: Event, **kwargs):
+        """
+        Event trigger, start an event use this function.
+        """
         try:
-            self.status, action = self.transations[(self.status, msg_type)]
-            action(msg)
+            target_status, action = self.transations[(self.status, event)]
+            action(**kwargs)
+            self.status = target_status
         except KeyError:
             pass
+
+    def handle(self):
+        """
+        NET triger, require every net subhandler has a msg kwarg
+        """
+        msg_type, msg = recv_msg(self.request)
+        event = None
+
+        if   msg_type == START_HEAD:
+            event = Event.NET_START
+        elif msg_type == END_HEAD:
+            event = Event.NET_END
+        elif msg_type == ACK_HEAD:
+            event = Event.NET_ACK
+        elif msg_type == ABORT_HEAD:
+            event = Event.NET_ABORT
+
+        self.transit(event, msg=msg)
         
 if __name__ == "__main__":
-    HOST, PORT = "localhost", 9999
-
     # 创建服务器，绑定到 localhost 的 9999 端口
     with TCPServer((HOST, PORT), ExamHandler) as server:
         # 激活服务器；它将持续运行直到你
