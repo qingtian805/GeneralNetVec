@@ -1,13 +1,11 @@
 from socketserver import TCPServer, BaseRequestHandler
-from socket import socket
-from struct import pack, unpack
+from struct import unpack
 from pickle import loads, dumps
 from threading import Thread
 from enum import Enum, auto
 from typing import Callable
 
 import examinators
-from net_vec.examinator import OLExaminator
 from exam_online import (
     OnlineExam,
     ABORT_HEAD, abort_msg,
@@ -41,17 +39,10 @@ class Event(Enum):
     NET_END   = auto()
     NET_ABORT = auto()
     LOC_FIN   = auto()
-    
 
 class ExamHandler(BaseRequestHandler):
     def _nop(self, msg: bytes):
         pass
-
-    def _send_ack(self, msg: bytes):
-        """
-        DO NOT call this to send ack.
-        """
-        self.request.sendall(ack_msg())
 
     def _start(self, msg: bytes):
         """
@@ -118,6 +109,13 @@ class ExamHandler(BaseRequestHandler):
         """
         self.request.sendall(end_msg())
 
+    def _save_final(self, msg: bytes):
+        """
+        DO NOT call this to send ack.
+        """
+        self.request.sendall(ack_msg())
+        self._close()
+
     def _abort(self, msg: bytes):
         """
         ABORT subhandler
@@ -133,12 +131,28 @@ class ExamHandler(BaseRequestHandler):
             return -1
 
         self.request.sendall(ack_msg())
-        
-    def __init__(self, request, client_address, server):
-        super().__init__(request, client_address, server)
+        self.server.close_request()
 
+    def _close(self):
+        self.keep_alive = False
+
+    def transit(self, event: Event, **kwargs):
+        """
+        Event trigger, start an event use this function.
+        """
+        try:
+            target_status, action = self.transitions[(self.status, event)]
+            action(**kwargs)
+            self.status = target_status
+        except KeyError:
+            pass
+
+    def handle(self):
+        """
+        NET triger, require every net subhandler has a msg kwarg
+        """
         self.status = Status.IDLE
-        self.transations = {
+        self.transitions = {
             # Start transations
             (Status.IDLE,      Event.NET_START): (Status.WAIT_RUN,  self._start),
             (Status.WAIT_RUN,  Event.NET_ACK)  : (Status.RUNNING,   self._nop),
@@ -150,41 +164,28 @@ class ExamHandler(BaseRequestHandler):
             (Status.WAIT_SAVE, Event.NET_ACK)  : (Status.SAVING,    self._save),
             # Finish saving
             (Status.SAVING,    Event.LOC_FIN)  : (Status.FIN_SAVE,  self._save_end),
-            (Status.FIN_SAVE,  Event.NET_ACK)  : (Status.IDLE,      self._send_ack),
+            (Status.FIN_SAVE,  Event.NET_ACK)  : (Status.IDLE,      self._save_final),
             # Aborting
             (Status.RUNNING,   Event.NET_ABORT): (Status.ABORTING,  self._abort),
-            (Status.ABORTING,  Event.NET_ACK)  : (Status.IDLE,      self._nop)
+            (Status.ABORTING,  Event.NET_ACK)  : (Status.IDLE,      self._close)
         } # type: dict[tuple[Status, Event], tuple[Status, Callable]]
 
-    def transit(self, event: Event, **kwargs):
-        """
-        Event trigger, start an event use this function.
-        """
-        try:
-            target_status, action = self.transations[(self.status, event)]
-            action(**kwargs)
-            self.status = target_status
-        except KeyError:
-            pass
+        self.keep_alive = True
+        while self.keep_alive:
+            msg_type, msg = recv_msg(self.request)
+            event = None
 
-    def handle(self):
-        """
-        NET triger, require every net subhandler has a msg kwarg
-        """
-        msg_type, msg = recv_msg(self.request)
-        event = None
+            if   msg_type == START_HEAD:
+                event = Event.NET_START
+            elif msg_type == END_HEAD:
+                event = Event.NET_END
+            elif msg_type == ACK_HEAD:
+                event = Event.NET_ACK
+            elif msg_type == ABORT_HEAD:
+                event = Event.NET_ABORT
 
-        if   msg_type == START_HEAD:
-            event = Event.NET_START
-        elif msg_type == END_HEAD:
-            event = Event.NET_END
-        elif msg_type == ACK_HEAD:
-            event = Event.NET_ACK
-        elif msg_type == ABORT_HEAD:
-            event = Event.NET_ABORT
+            self.transit(event, msg=msg)
 
-        self.transit(event, msg=msg)
-        
 if __name__ == "__main__":
     # 创建服务器，绑定到 localhost 的 9999 端口
     with TCPServer((HOST, PORT), ExamHandler) as server:
