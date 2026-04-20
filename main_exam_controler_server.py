@@ -1,4 +1,4 @@
-from socketserver import TCPServer, BaseRequestHandler
+from socketserver import TCPServer
 from struct import unpack
 from pickle import loads, dumps
 from threading import Thread
@@ -6,14 +6,8 @@ from enum import Enum, auto
 from typing import Callable
 
 import examinators
-from exam_online import (
-    OnlineExam,
-    ABORT_HEAD, abort_msg,
-    ACK_HEAD, ack_msg,
-    END_HEAD, end_msg,
-    START_HEAD, start_msg,
-    recv_msg
-    )
+from exam_online import OnlineExam
+from exam_protocal import *
 
 BUFFER_SIZE = 1500
 STOP_TIMEOUT = 10
@@ -40,7 +34,7 @@ class Event(Enum):
     NET_ABORT = auto()
     LOC_FIN   = auto()
 
-class ExamHandler(BaseRequestHandler):
+class ExamHandler(FSMBase):
     def _nop(self, msg: bytes):
         pass
 
@@ -136,55 +130,24 @@ class ExamHandler(BaseRequestHandler):
     def _close(self):
         self.keep_alive = False
 
-    def transit(self, event: Event, **kwargs):
-        """
-        Event trigger, start an event use this function.
-        """
-        try:
-            target_status, action = self.transitions[(self.status, event)]
-            action(**kwargs)
-            self.status = target_status
-        except KeyError:
-            pass
-
-    def handle(self):
-        """
-        NET triger, require every net subhandler has a msg kwarg
-        """
-        self.status = Status.IDLE
-        self.transitions = {
-            # Start transations
-            (Status.IDLE,      Event.NET_START): (Status.WAIT_RUN,  self._start),
-            (Status.WAIT_RUN,  Event.NET_ACK)  : (Status.RUNNING,   self._nop),
-            # End trasations
-            (Status.RUNNING,   Event.NET_END)  : (Status.FIN_EXAM,  self._exam_end),
-            (Status.FIN_EXAM,  Event.NET_ACK)  : (Status.WAIT_STOP, self._prep_save),
-            # Start saving
-            (Status.WAIT_STOP, Event.LOC_FIN)  : (Status.WAIT_SAVE, self._start_save),
-            (Status.WAIT_SAVE, Event.NET_ACK)  : (Status.SAVING,    self._save),
-            # Finish saving
-            (Status.SAVING,    Event.LOC_FIN)  : (Status.FIN_SAVE,  self._save_end),
-            (Status.FIN_SAVE,  Event.NET_ACK)  : (Status.IDLE,      self._save_final),
-            # Aborting
-            (Status.RUNNING,   Event.NET_ABORT): (Status.ABORTING,  self._abort),
-            (Status.ABORTING,  Event.NET_ACK)  : (Status.IDLE,      self._close)
-        } # type: dict[tuple[Status, Event], tuple[Status, Callable]]
-
-        self.keep_alive = True
-        while self.keep_alive:
-            msg_type, msg = recv_msg(self.request)
-            event = None
-
-            if   msg_type == START_HEAD:
-                event = Event.NET_START
-            elif msg_type == END_HEAD:
-                event = Event.NET_END
-            elif msg_type == ACK_HEAD:
-                event = Event.NET_ACK
-            elif msg_type == ABORT_HEAD:
-                event = Event.NET_ABORT
-
-            self.transit(event, msg=msg)
+    status = Status.IDLE
+    transitions = {
+        # Start transations
+        (Status.IDLE,      Event.NET_START): (Status.WAIT_RUN,  _start),
+        (Status.WAIT_RUN,  Event.NET_ACK)  : (Status.RUNNING,   _nop),
+        # End trasations
+        (Status.RUNNING,   Event.NET_END)  : (Status.FIN_EXAM,  _exam_end),
+        (Status.FIN_EXAM,  Event.NET_ACK)  : (Status.WAIT_STOP, _prep_save),
+        # Start saving
+        (Status.WAIT_STOP, Event.LOC_FIN)  : (Status.WAIT_SAVE, _start_save),
+        (Status.WAIT_SAVE, Event.NET_ACK)  : (Status.SAVING,    _save),
+        # Finish saving
+        (Status.SAVING,    Event.LOC_FIN)  : (Status.FIN_SAVE,  _save_end),
+        (Status.FIN_SAVE,  Event.NET_ACK)  : (Status.IDLE,      _save_final),
+        # Aborting
+        (Status.RUNNING,   Event.NET_ABORT): (Status.ABORTING,  _abort),
+        (Status.ABORTING,  Event.NET_ACK)  : (Status.IDLE,      _close),
+    } # type: dict[tuple[Status, Event], tuple[Status, Callable]]
 
 if __name__ == "__main__":
     # 创建服务器，绑定到 localhost 的 9999 端口
