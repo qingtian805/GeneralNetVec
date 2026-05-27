@@ -1,3 +1,4 @@
 [submodule "examinators/kitsune/Kitsune"]
 	path = examinators/kitsune/Kitsune
 	url = https://github.com/qingtian805/Kitsune-py.git
+	branch = numpy2.0
