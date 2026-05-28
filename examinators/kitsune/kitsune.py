@@ -54,7 +54,7 @@ class KitsuneExam(Examinator):
 
         # process KitNET
         return self.KitNET.process(x)  # will train during the grace periods, then execute on all the rest.
-    
+
     def train_model(
             self,
             model_save_path: str,
