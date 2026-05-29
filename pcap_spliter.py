@@ -5,9 +5,9 @@ from scapy.layers.inet6 import IPv6
 from scapy.layers.all import *
 import os
 
-PCAP_FILE = "test.pcap"
+PCAP_FILE = "datasets/CIC-IDS-2017/Thursday-WorkingHours.pcap"
 BUFFER_SIZE = 10000
-CON_SAVE_PATH = "./pcaps/test"
+CON_SAVE_PATH = "./pcaps/CIC-IDS-2017/Thursday"
 UDP_TIMEOUT = 2.
 
 def phrase(pkt:Packet):
@@ -65,12 +65,16 @@ if not os.path.exists(CON_SAVE_PATH):
 
 reader = PcapReader(PCAP_FILE) # type: PcapReader
 conns = {} # type: dict[tuple[IP | IPv6], tuple[list[Packet], EDecimal]]
+count = 0
 
 while True:
     pkt_list = reader.read_all(BUFFER_SIZE)
+    print(f"Processing pkt {count}-{count + len(pkt_list)}")
+    count += len(pkt_list)
 
     for pkt in pkt_list:
-        print(pkt)
+        if not (pkt.haslayer(TCP) or pkt.haslayer(UDP)):
+            continue
         ip1, p1, ip2, p2, proto = phrase(pkt)
 
         status = conns.get((ip1, p1, ip2, p2, proto))
@@ -87,9 +91,9 @@ while True:
             if 'R' in pkt[TCP].flags:
                 write_conn(ip1, p1, ip2, p2, proto, plist)
                 pop_conn(ip1, p1, ip2, p2, proto)
-            if 'F' in pkt[TCP].flags:
+            elif 'F' in pkt[TCP].flags:
                 status[1] += 1.
-            if status[1] >= 2 and 'A' in pkt[TCP].flags:
+            elif status[1] >= 2 and 'A' in pkt[TCP].flags:
                 write_conn(ip1, p1, ip2, p2, proto, plist)
                 pop_conn(ip1, p1, ip2, p2, proto)
         elif proto == "UDP":
@@ -102,6 +106,11 @@ while True:
 
     if len(pkt_list) < BUFFER_SIZE:
         break
+
+print("Process finished, dumping incompete TCP conns and UDP conns")
+CON_SAVE_PATH = os.path.join(CON_SAVE_PATH, "incomplete")
+if not os.path.exists(CON_SAVE_PATH):
+    os.mkdir(CON_SAVE_PATH)
 
 for key in conns.keys():
     status = conns.get(key)
