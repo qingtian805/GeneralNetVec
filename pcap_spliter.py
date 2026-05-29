@@ -1,10 +1,9 @@
 from scapy.utils import PcapReader, wrpcap, EDecimal
 from scapy.packet import Packet
-from scapy.layers.inet import IP
+from scapy.layers.inet import IP, TCP, UDP
 from scapy.layers.inet6 import IPv6
 from scapy.layers.all import *
 import os
-
 
 PCAP_FILE = "test.pcap"
 BUFFER_SIZE = 10000
@@ -54,9 +53,15 @@ def write_conn(ip1, p1, ip2, p2, proto, plist):
 # 按照会话为单位分割一个流量捕获列表
 # 五元组：IP1，Port1，IP2，Port2，Protocal
 
+def mkdir(path: str):
+    parent = os.path.split(path)[0]
+    if not os.path.exists(parent):
+        mkdir(parent)
+    os.mkdir(path)
+
 if not os.path.exists(CON_SAVE_PATH):
     print("Save directory not exist, creating...")
-    os.mkdir(CON_SAVE_PATH)
+    mkdir(CON_SAVE_PATH)
 
 reader = PcapReader(PCAP_FILE) # type: PcapReader
 conns = {} # type: dict[tuple[IP | IPv6], tuple[list[Packet], EDecimal]]
@@ -103,3 +108,5 @@ for key in conns.keys():
     if status[1] >= 0:
         write_conn(*key, conns[key][0])
         status[1] = EDecimal(-1)
+
+print(f"Pcap splited, conns are saved in {CON_SAVE_PATH}")
