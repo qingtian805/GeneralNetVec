@@ -40,14 +40,14 @@ class Examinator:
         评价目标 pcap 文件，返回 rmse 列表。可以使用 limit 评价部分内容
 
         :param pcap_file: 被评价的 pcap 文件
-        :param limit: 如果需要评价部分内容,则设置本项目 
+        :param limit: 如果需要评价部分内容,则设置本项目
         """
         pass
 
 class OLExaminator(Examinator):
     def __init__(self):
         """
-        在线评估器类, 内容与离线评估器类似, 完成模型全生命周期管理, 
+        在线评估器类, 内容与离线评估器类似, 完成模型全生命周期管理
 
         可以用这样区分两者: 在线评估器应该包含 exam_pkt 函数, 而非 exam_pcap 函数
         """

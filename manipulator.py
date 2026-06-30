@@ -8,26 +8,35 @@ from net_vec.logger import logger
 
 class Manipulator:
     def __init__(
-            self, 
+            self,
             mal_pcap_file: str,
-            algorithum: NetAlg, 
-            evaluator: Evaluator, 
+            algorithum: NetAlg,
+            evaluator: Evaluator,
             grp_pkt_num: int,
             ):
-        
+        """网络异常流量变异器，使用指定的算法与评价器完成异常流量对抗样本生成
+
+        :param mal_pcap_file: 恶意流量存储路径
+        :param algorithum: 一个基于 net_vec.algorithum.NetAlg 实现的优化算法
+        :param evaluator: 一个基于 net_vec.evaluator.Evaluator 实现的评价器
+        :param grp_pkt_num: 超参数，同时进行变异的恶意流量包数
+        """
+
         with open(mal_pcap_file, "rb") as f:
             self.pkt_list = rdpcap(f)
 
         self.alg = algorithum
         self.eval = evaluator
 
+        # init logger
         logger.algo_instance = algorithum
         logger.eval_instance = evaluator
-        
+
         self.alg.evaluator = evaluator
-        
+
         self.grp_pkt_num = grp_pkt_num
 
+        # log
         self.sta_best_x = []
         self.sta_feature_list = []
         self.sta_all_feature_list = []
@@ -36,6 +45,9 @@ class Manipulator:
         self.best_pkt_list = []
 
     def save_config(self, save_path):
+        """保存当前变异参数到 save_path
+        记录
+        """
         f = open(save_path, "a")
 
         f.write(f"Time Spent: {self.time_spend}")
@@ -47,21 +59,30 @@ class Manipulator:
         f.write("VecParameters:")
         for key, value in self.alg.cfg.__dict__.items():
             f.write(f"    {key}:\t {value}")
-        
+
         f.close()
 
     def dump_sta(self, sta_path):
+        """ 保存日志文件，包含：
+        1. 历史最优样本
+        2. 历史最优样本的特征在评价器中的恶意包特征
+        3. 历史最优样本的特征在评价器中的所有包特征
+        4. 历史最优样本的距离历史
+        5. 所有样本的距离历史
+
+        以上内容通过 pickle 库逐个存储在 sta_path 文件中
+        """
         with open(sta_path, "wb") as f:
             dump(self.sta_best_x, f)
             dump(self.sta_feature_list, f)
             dump(self.sta_all_feature_list, f)
             dump(self.sta_glob_dis_list, f)
             dump(self.sta_avg_dis_list, f)
-        
+
     def dump_pkt_list(self, pcap_path):
+        """ 将最优样本的流量写入 pcap_path 中 """
         with open(pcap_path, "wb") as f:
             wrpcap(f, self.best_pkt_list)
-
 
     def manipulate(
             self,
@@ -70,6 +91,8 @@ class Manipulator:
             ):
         r"""
         manipulate 执行优化算法，并返回优化结果
+        :param start: 变异开始的包序号，首个为 0
+        :param end: 变异结束的包序号，首个为 0
         """
         timestamp_start = time.process_time()
 

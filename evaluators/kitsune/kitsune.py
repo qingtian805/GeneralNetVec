@@ -108,7 +108,7 @@ class KitsuneEval(Evaluator):
         :param fm_grace: 训练特征提取器的包数量，用于模拟在 Kitsune 运行过程中最大最小值的变化
         :param ad_grace: 训练入侵检测其的包数量，用于模拟在 Kitsune 运行过程中最大最小值的变化
         :param mimic_set: 被模拟的良性流量特征
-        :param init_pcap_in:
+        :param init_pcap_in: 预处理流量，用于模拟在特定情况下评价器的运行状态
         """
 
         super().__init__(mimic_set)

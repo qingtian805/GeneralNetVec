@@ -16,8 +16,8 @@ class Evaluator:
         with open(mimic_set_file, "rb") as f:
             self.cfg.mimic_set = np.load(f)
         # logger API, 分别为不包含和包含构建包的流量特征列表
-        self.feature = None # type: list
-        self.all_feature = None # type: list
+        self.feature: list | None = None
+        self.all_feature: list | None = None
 
     def forward(self, grp_best_pkt_list: PacketList):
         """

@@ -19,7 +19,7 @@ class NetAlg:
             proto_min_lmt: float = 1.,
             data_max_lmt: list = [np.nan, 1500., 1480., 1460.],
             data_min_lmt: float = 0.,
-            pkt_list: list[Packet] = None, 
+            pkt_list: list[Packet] = None,
             last_end_time: EDecimal = None,
         ):
         r"""
@@ -64,8 +64,8 @@ class NetAlg:
             self.set_pkt_list(pkt_list, last_end_time)
 
     def set_pkt_list(
-            self, 
-            pkt_list: list[Packet], 
+            self,
+            pkt_list: list[Packet],
             last_end_time: EDecimal = None
             ):
         """
@@ -85,7 +85,7 @@ class NetAlg:
             try:
                 layers.remove(Raw)
             except ValueError:
-                pass    
+                pass
             proto_layer = len(layers)
 
             if proto_layer > 3:
@@ -102,13 +102,13 @@ class NetAlg:
         self.glob_best_x = None
         self.glob_best_x_dis = np.inf
         self.glob_best_x_index = -1
-    
+
     def get_paramter(self):
         """
         通过本函数返回算法的参数
         """
         return dict()
-    
+
     def _iteration(self):
         """
         算法实现中应该实现一个轮函数，功能为算法单轮迭代的步骤实现
