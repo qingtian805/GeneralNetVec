@@ -3,9 +3,13 @@ import numpy as np
 
 from .vector import Unit
 
-mimic_set: np.ndarray | None = None
-
 class Evaluator:
+    mimic_set: np.ndarray | None = None
+
+    def set_mimic_set(self, mimic_set_file: str):
+        with open(mimic_set_file, "rb") as f:
+            self.mimic_set = np.load(f)
+
     def __init__(
             self,
             mimic_set_file: str
@@ -15,10 +19,7 @@ class Evaluator:
 
         :param mimic_set: 被模仿特征的正常流量特征文件 mimic(模仿、拟态)，应当是numpy保存的ndarray
         """
-        global mimic_set
-
-        with open(mimic_set_file, "rb") as f:
-            mimic_set = np.load(f)
+        self.set_mimic_set(mimic_set_file)
 
         # logger API, 分别为不包含和包含构建包的流量特征列表
         self.feature: list | None = None

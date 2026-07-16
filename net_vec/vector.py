@@ -5,7 +5,7 @@ import numpy as np
 
 from scapy.packet import Raw
 
-from net_vec.config import cfg
+from .config import cfg
 
 def decide_has_pkt(crafted_pkt_prob: float):
     """decide_has_pkt 用于确定一个位置是否拥有包，概率为 crafted_pkt_prob

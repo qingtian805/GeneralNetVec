@@ -5,9 +5,9 @@ from scapy.utils import rdpcap
 
 from examinators import OLKitsuneExam
 
-exam = OLKitsuneExam("./exam_res/kitsune/model.pkl")
+exam = OLKitsuneExam("exp_file/models/Kitsune/TM_ben.pkl")
 
-pcap = rdpcap("test.pcap")
+pcap = rdpcap("test/simple_packet.pcap")
 
 exam.prepare_exam()
 rmse = exam.exam_pkt(pcap)

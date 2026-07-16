@@ -1,5 +1,5 @@
 from scapy.utils import EDecimal
-from scapy.packet import Packet
+from scapy.packet import Packet, Raw
 import numpy as np
 
 class Conf:

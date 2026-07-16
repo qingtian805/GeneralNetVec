@@ -2,13 +2,13 @@ import os, sys
 sys.path.append(f"{os.path.abspath(".")}")
 
 from scapy.all import *
-from net_vec.vector import Unit
-from net_vec.algorithum import NetAlg
-with open("./test.pcap", "rb") as f:
+from net_vec import Unit, NetAlg, cfg
+
+with open("test/simple_packet.pcap", "rb") as f:
     pkt_list = rdpcap(f)
 
 alg = NetAlg()
-alg.set_pkt_list(pkt_list, pkt_list[0].time)
+cfg.set_pkt_list(pkt_list, pkt_list[0].time)
 
 t = Unit()
 t.initialize()

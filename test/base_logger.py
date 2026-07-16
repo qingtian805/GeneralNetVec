@@ -1,13 +1,10 @@
 import sys, os
 sys.path.append(f"{os.path.abspath(".")}")
-from net_vec.algorithum import NetAlg
-from net_vec.evaluator import Evaluator
-from net_vec.logger import logger
+from net_vec import NetAlg, Evaluator, logger
 
 class TestAlg(NetAlg):
     def __init__(self):
         pass
-    
     @logger.iteration_logger
     def update(self):
         self.glob_best_x = 1

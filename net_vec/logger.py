@@ -1,9 +1,9 @@
 import numpy as np
 
 from copy import deepcopy
-from net_vec.config import cfg
-from net_vec.algorithum import NetAlg
-from net_vec.evaluator import Evaluator
+from .config import cfg
+from .algorithum import NetAlg
+from .evaluator import Evaluator
 
 class Logger:
     def __init__(self):
