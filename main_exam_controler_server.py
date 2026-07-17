@@ -15,8 +15,7 @@ EXAM_THREAD = None # type: Thread | None
 INTERFACE = "wlp0s20f3"
 HOST, PORT = "localhost", 9999
 
-
-class Status(Enum):
+class CtlSrvStatus(Status):
     IDLE      = auto()
     WAIT_RUN  = auto()
     RUNNING   = auto()
@@ -27,12 +26,12 @@ class Status(Enum):
     FIN_SAVE  = auto()
     ABORTING  = auto()
 
-class Event(Enum):
-    NET_ACK   = auto()
-    NET_START = auto()
-    NET_END   = auto()
-    NET_ABORT = auto()
+class LocEvent(Event):
     LOC_FIN   = auto()
+
+STAT = CtlSrvStatus
+NEVNT = NetEvent
+LEVNT = LocEvent
 
 class ExamHandler(FSMBase):
     def _nop(self, msg: bytes):
@@ -41,6 +40,7 @@ class ExamHandler(FSMBase):
     def _start(self, msg: bytes):
         """
         START subhandler
+
         """
         global EXAM_THREAD
         # Phase msg: exam_length:4 byte + exam_name + paramters
@@ -48,7 +48,7 @@ class ExamHandler(FSMBase):
         self.exam_type = msg[4:exam_length + 4].decode("UTF-8")
         exam_class = getattr(examinators, self.exam_type)
         self.exam_paramters = loads(msg[exam_length + 4:])
-        
+
         examinator = exam_class(self.exam_paramters)
         self.exam = OnlineExam(examinator)
 
@@ -65,23 +65,23 @@ class ExamHandler(FSMBase):
     def _exam_end(self, msg: bytes):
         """
         END subhandler
-        """  
+        """
         # Stop exam process
         self.exam.stop()
-        
+
         # END protocl
         self.request.sendall(ack_msg())
         return 0
-    
+
     def _prep_save(self):
         global EXAM_THREAD
         EXAM_THREAD.join(STOP_TIMEOUT)
 
         if EXAM_THREAD.is_alive():
             return -1
-        
-        self.transit(Event.LOC_FIN)
-    
+
+        self.transit(LEVNT.LOC_FIN)
+
     def _start_save(self):
         self.request.sendall(start_msg(self.exam_type, self.exam_paramters))
 
@@ -95,7 +95,7 @@ class ExamHandler(FSMBase):
         # Dumping result
         self.request.sendall(dumps(self.exam.rmse_list))
 
-        self.transit(Event.LOC_FIN)
+        self.transit(LEVNT.LOC_FIN)
 
     def _save_end(self):
         """
@@ -115,9 +115,9 @@ class ExamHandler(FSMBase):
         ABORT subhandler
         """
         global EXAM_THREAD
-        if self.status == Status.IDLE:
+        if self.status == STAT.IDLE:
             return 0
-        
+
         self.exam.stop()
         EXAM_THREAD.join(timeout=STOP_TIMEOUT)
 
@@ -130,24 +130,29 @@ class ExamHandler(FSMBase):
     def _close(self):
         self.keep_alive = False
 
-    status = Status.IDLE
     transitions = {
         # Start transations
-        (Status.IDLE,      Event.NET_START): (Status.WAIT_RUN,  _start),
-        (Status.WAIT_RUN,  Event.NET_ACK)  : (Status.RUNNING,   _nop),
+        (STAT.IDLE,      NEVNT.NET_START): (STAT.WAIT_RUN,  _start),
+        (STAT.WAIT_RUN,  NEVNT.NET_ACK)  : (STAT.RUNNING,   _nop),
         # End trasations
-        (Status.RUNNING,   Event.NET_END)  : (Status.FIN_EXAM,  _exam_end),
-        (Status.FIN_EXAM,  Event.NET_ACK)  : (Status.WAIT_STOP, _prep_save),
+        (STAT.RUNNING,   NEVNT.NET_END)  : (STAT.FIN_EXAM,  _exam_end),
+        (STAT.FIN_EXAM,  NEVNT.NET_ACK)  : (STAT.WAIT_STOP, _prep_save),
         # Start saving
-        (Status.WAIT_STOP, Event.LOC_FIN)  : (Status.WAIT_SAVE, _start_save),
-        (Status.WAIT_SAVE, Event.NET_ACK)  : (Status.SAVING,    _save),
+        (STAT.WAIT_STOP, LEVNT.LOC_FIN)  : (STAT.WAIT_SAVE, _start_save),
+        (STAT.WAIT_SAVE, NEVNT.NET_ACK)  : (STAT.SAVING,    _save),
         # Finish saving
-        (Status.SAVING,    Event.LOC_FIN)  : (Status.FIN_SAVE,  _save_end),
-        (Status.FIN_SAVE,  Event.NET_ACK)  : (Status.IDLE,      _save_final),
+        (STAT.SAVING,    LEVNT.LOC_FIN)  : (STAT.FIN_SAVE,  _save_end),
+        (STAT.FIN_SAVE,  NEVNT.NET_ACK)  : (STAT.IDLE,      _save_final),
         # Aborting
-        (Status.RUNNING,   Event.NET_ABORT): (Status.ABORTING,  _abort),
-        (Status.ABORTING,  Event.NET_ACK)  : (Status.IDLE,      _close),
-    } # type: dict[tuple[Status, Event], tuple[Status, Callable]]
+        (STAT.RUNNING,   NEVNT.NET_ABORT): (STAT.ABORTING,  _abort),
+        (STAT.ABORTING,  NEVNT.NET_ACK)  : (STAT.IDLE,      _close),
+    }
+
+    def __init__(self):
+        super().__init__(
+            init_status=STAT.IDLE,
+            keep_alive=True,
+        )
 
 if __name__ == "__main__":
     # 创建服务器，绑定到 localhost 的 9999 端口
