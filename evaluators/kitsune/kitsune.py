@@ -7,9 +7,7 @@ from scapy.all import PacketList
 from .AfterImageExtractor.FEKitsune import Kitsune
 from .AfterImageExtractor.KitsuneTools import *
 
-from net_vec.evaluator import Evaluator
-from net_vec.vector import Unit
-from net_vec.logger import logger
+from net_vec import Evaluator, Unit, cfg, logger
 
 def flatten(item:Iterable, ignore_types=(str, bytes)):
     res = []
@@ -25,6 +23,8 @@ class KNnormalizer:
     def __init__(self, model_save_path: str):
         with open(model_save_path, 'rb') as f:
             # FM 是在 Kitsune 中的 Feature Mapper
+            _ = pkl.load(f)
+            _ = pkl.load(f)
             self.FM = pkl.load(f)
 
         self.norm_max = []
@@ -99,11 +99,14 @@ class KitsuneEval(Evaluator):
 
         AfterImage 特征提取器是 Kitsune NIDS 的一部分，为了理解方便，命名为 Kitsune 评价器
 
-        :param model_save_path: Kitsune 模型存储的路径，需要其中包含 Feature Mapper.(附加说明，这个文件一般包含四个内容)：
-                                1. Feature Mapper 参数
-                                2. 聚合层参数（多个小AE）
-                                3. 输出层参数（大AE）
-                                4. RMSE 最大值
+        :param model_save_path: Kitsune 模型存储的路径，需要其中包含 Feature Mapper.(附加说明，这个文件一般包含以下内容)：
+
+                                1. 异常门限参数
+                                2. 数据集特征数
+                                3. Feature Mapper 参数
+                                4. 聚合层参数（多个小AE）
+                                5. 输出层参数（大AE）
+                                6. 运行状态（三个参数FM_grace, AD_grace, n_trained）
         :param feature_path: 训练 Kitusne 的良性流量包，用于模拟在 Kitsune 运行过程中最大最小值的变化
         :param fm_grace: 训练特征提取器的包数量，用于模拟在 Kitsune 运行过程中最大最小值的变化
         :param ad_grace: 训练入侵检测其的包数量，用于模拟在 Kitsune 运行过程中最大最小值的变化
@@ -139,7 +142,7 @@ class KitsuneEval(Evaluator):
         mal_pos = []
         cft_num = 0
 
-        for i in range(self.cfg.pkt_num):
+        for i in range(cfg._pkt_num):
             cft_num += int(round(x.mal[i][1]))
             mal_pos.append(i + cft_num)
 
@@ -159,8 +162,8 @@ class KitsuneEval(Evaluator):
 
         # 计算每个特征与对应目标特征的 l2 距离（范数），取最小值作为评价指标
         dis = 0
-        for i in range(self.cfg.pkt_num):
-            dis += min(np.linalg.norm(norm_feature[i] - self.cfg.mimic_set,
+        for i in range(cfg._pkt_num):
+            dis += min(np.linalg.norm(norm_feature[i] - self.mimic_set,
                                      axis=1))
 
         return dis

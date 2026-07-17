@@ -2,9 +2,7 @@ import random
 from copy import deepcopy
 import numpy as np
 
-from net_vec.algorithum import NetAlg
-from net_vec.vector import Unit
-from net_vec.logger import logger
+from net_vec import NetAlg, Unit, cfg, logger
 
 class Partical:
     def __init__(self):
@@ -175,6 +173,6 @@ class LBPSO(NetAlg):
                 break
         # 算法迭代结束，提取最好的结果
         cur_end_time = self.glob_best_x.mal[-1][0]
-        ics_time = cur_end_time - float(self.cfg.pkt_list[-1].time)
+        ics_time = cur_end_time - float(cfg.pkt_list[-1].time)
 
         return ics_time, cur_end_time, self.glob_best_x

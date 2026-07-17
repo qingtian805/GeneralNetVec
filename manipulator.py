@@ -2,11 +2,13 @@ import time
 from pickle import dump
 from scapy.utils import rdpcap, wrpcap
 
-from net_vec.algorithum import NetAlg
-from net_vec.evaluator import Evaluator
-from net_vec.logger import logger
+from net_vec import NetAlg, Evaluator, logger, cfg
+
+vec_cfg = cfg
+""" 底层向量数据结构设置，影响流量与向量的双向映射 """
 
 class Manipulator:
+
     def __init__(
             self,
             mal_pcap_file: str,
@@ -57,7 +59,7 @@ class Manipulator:
         for key, value in self.alg.get_paramter().items():
             f.write(f"    {key}:\t {value}")
         f.write("VecParameters:")
-        for key, value in self.alg.cfg.__dict__.items():
+        for key, value in cfg.__dict__.items():
             f.write(f"    {key}:\t {value}")
 
         f.close()
@@ -109,7 +111,7 @@ class Manipulator:
 
             for p in grp_pkt_list:
                 p.time = p.time + acc_ics_time
-            self.alg.set_pkt_list(grp_pkt_list, last_end_time)
+            cfg.set_pkt_list(grp_pkt_list, last_end_time)
 
             acc_time, last_end_time, best_x = self.alg.execute()
 
