@@ -19,10 +19,10 @@ class Exam:
 
     def _detection_evasion_rate(self):
         """ 计算对抗样本中（包含构建包）有多少逃脱了检测 """
-        origin_detectable = len(self.origin_rmse[self.origin_rmse > self.ad_threshold])
-        manipu_undetected = len(self.manipu_rmse[self.manipu_rmse < self.ad_threshold])
+        positive_origin = len(self.origin_rmse[self.origin_rmse > self.ad_threshold])
+        positive_manipu = len(self.manipu_rmse[self.manipu_rmse > self.ad_threshold])
 
-        return 1 - manipu_undetected / origin_detectable
+        return 1 - positive_manipu / positive_origin
 
     def _malicious_evasion_rate(self):
         """ 计算对抗样本中（不包含构建包）有多少逃脱了检测 """
@@ -35,11 +35,11 @@ class Exam:
                 mal_pos += [False] * round(x.mal[i][1])
                 mal_pos += [True]
 
-        origin_detectable = len(self.origin_rmse[self.origin_rmse > self.ad_threshold])
+        positive_origin = len(self.origin_rmse[self.origin_rmse > self.ad_threshold])
         mal_rmse = self.manipu_rmse[mal_pos]
-        mal_mani_undetected = len(mal_rmse[mal_rmse < self.ad_threshold])
+        positive_mal_manipu = len(mal_rmse[mal_rmse > self.ad_threshold])
 
-        return 1 - mal_mani_undetected / origin_detectable
+        return 1 - positive_mal_manipu / positive_origin
 
     def _probability_decline_rate(self):
         """ 计算对抗之后样本在目标检测器中恶意概率（异常置信度）降低了多少 """
@@ -53,10 +53,10 @@ class Exam:
 
     def dump_result(self, dump_file_prefix: str):
         with open(f"{dump_file_prefix}.txt", "w") as f:
-            f.writelines((f"DER: {self.der}",
-                          f"MER: {self.mer}",
-                          f"PDR: {self.pdr}",
-                          f"MMR: {self.mmr}",
+            f.writelines((f"DER(gb): {self.der}",
+                          f"MER(gb): {self.mer}",
+                          f"PDR(gb): {self.pdr}",
+                          f"MMR(gb): {self.mmr}",
                           f"rmse file saved at {dump_file_prefix}.pkl"))
 
         with open(f"{dump_file_prefix}.pkt", "wb") as f:

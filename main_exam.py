@@ -4,11 +4,12 @@ from examinators import KitsuneExam
 """测试总控台，在生成流量后可以在这里测试效果
 """
 
-exam = KitsuneExam("./exam_res/kitsune/model.pkl")
-# exam.train_model("./exam_res/kitsune/model.pkl",
-#                  "TrafficManipulator/example/train_ben.pcap",
+exam = KitsuneExam()
+# exam.train_model("exp_file/models/Kitsune/mirai.pkl",
+#                  "datasets/single_file/mirai.pcap",
 #                  )
 
+exam.load_model("exp_file/models/Kitsune/TM_ben.pkl")
 e = Exam(exam, "statistics.pkl")
-e.exam("TrafficManipulator/example/test.pcap",
+e.exam("exp_file/mal/mal.pcap",
        "manipulated.pcap")

@@ -19,9 +19,9 @@ class OnlineExam(Exam):
         :param batch_size: 一次送入评估器的流量数量
         :param buffer_size: 缓冲区大小，如果 <= 0，则不限制缓冲区大小
         """
-        
+
         getattr(ol_examinator, "exam_pkt")
-        
+
         self.examinator = ol_examinator
         self.batch_size = batch_size
 
@@ -38,11 +38,11 @@ class OnlineExam(Exam):
             self.buffer.put_nowait(packet)
         else:
             print("Too much traffic!")
-    
+
     def process(self):
         self.examinator.prepare_exam()
         self.batch = []
-        while True:          
+        while True:
             pkt = self.buffer.get()
             if pkt is None:
                 break
@@ -52,12 +52,12 @@ class OnlineExam(Exam):
                 rmse = self.examinator.exam_pkt(self.batch)
                 self.batch.clear()
                 self.rmse_list += rmse
-        
+
     def flush(self):
         """
         将最后的数据全部取出并完成评估，
         """
-        if len(self.batch) != 0:
+        if len(self.batch) > 0:
             self.rmse_list += self.examinator.exam_pkt(self.batch)
 
     def exam(self, interface = None ,filter = ""):
@@ -67,7 +67,7 @@ class OnlineExam(Exam):
         """
         self.p_thread = Thread(target=self.process)
         self.p_thread.start()
-        
+
         self.sniffer = AsyncSniffer(prn=self.capture, store=False, filter=filter, iface=interface)
         self.sniffer.start()
 
@@ -76,7 +76,7 @@ class OnlineExam(Exam):
         self.buffer.put(None)
         self.p_thread.join()
         self.flush()
-    
+
 class ExamMetricCalculator(Exam):
     def __init__(self):
         pass
@@ -105,12 +105,12 @@ class ExamMetricCalculator(Exam):
         pdr = calculator._probability_decline_rate()
 
         return der,mer,pdr
-    
+
 if __name__ == "__main__":
     from examinators import OLKitsuneExam
     from time import sleep
-    
-    exam = OLKitsuneExam("./exam_res/kitsune/model.pkl")
+
+    exam = OLKitsuneExam("exp_file/models/Kitsune/TM_ben.pkl")
     e = OnlineExam(exam, batch_size=20, buffer_size=0)
 
     # e.exam()
