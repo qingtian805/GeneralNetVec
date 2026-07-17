@@ -4,7 +4,7 @@ sys.path.append(f"{os.path.abspath(".")}")
 from net_vec import NetAlg, cfg
 
 from scapy.utils import rdpcap
-with open("test/simple_packet.pcap", "rb") as f:
+with open("test/test.pcap", "rb") as f:
     pkt_list = rdpcap(f)
 
 cfg.set_pkt_list(pkt_list)

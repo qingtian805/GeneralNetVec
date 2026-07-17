@@ -7,7 +7,7 @@ from examinators import OLKitsuneExam
 
 exam = OLKitsuneExam("exp_file/models/Kitsune/TM_ben.pkl")
 
-pcap = rdpcap("test/simple_packet.pcap")
+pcap = rdpcap("test/test.pcap")
 
 exam.prepare_exam()
 rmse = exam.exam_pkt(pcap)
