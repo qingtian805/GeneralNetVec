@@ -36,6 +36,9 @@ class Unit:
 
     def initialize(self):
         """initialize 负责初始化一个 Unit 类中的 恶意包特征和构建包特征
+
+        在运行前请至少先通过 config 模块设置 pkt_list
+
         构建包拥有随机MTU (包长度)、随机的槽位 (时间)、随机的协议层数(不会超过对应恶意包的层数)，
         每个构造包最大拥有max_cft_pkt个包,并将原始包的时间间隔拉长 max_time_extend 倍，方便插入构造包
         """
@@ -69,10 +72,11 @@ class Unit:
         for i in range(slot_num):
             # 按照固定的时间间隔构建包，如果构建包的时间超过了恶意包的时间，则进入下一个槽位组，在最后一个恶意包位置退出
             slot_time = i * slot_itv + cfg.last_end_time
-            if slot_time >= self.mal[nxt_mal_no][0]:
+            while nxt_mal_no < cfg._pkt_num and slot_time >= self.mal[nxt_mal_no][0]:
                 nxt_mal_no += 1
-                if nxt_mal_no == cfg._pkt_num:
-                    break
+
+            if nxt_mal_no >= cfg._pkt_num:
+                break
             # 如果决定不构建包，或当前槽位组包数量达到最大限制（但还有槽位），则继续
             if (not decide_has_pkt(crafted_pkt_prob)
                 ) or self.mal[nxt_mal_no][1] == cfg.max_cft_pkt:
