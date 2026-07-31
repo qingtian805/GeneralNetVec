@@ -1,7 +1,6 @@
 import numpy as np
 
 from copy import deepcopy
-from .config import cfg
 from .algorithum import NetAlg
 from .evaluator import Evaluator
 
@@ -44,6 +43,9 @@ class Logger:
         1. 记录评价函数输出的历史之和用于计算优化过程中的距离均值
         2. 记录来自评价器的 feature 和 all_feature 对象
         """
+        if self.eval_instance is None:
+            return eval_func
+
         def wapper(*args, **kwargs):
             dis = eval_func(*args, **kwargs)
 
@@ -54,13 +56,15 @@ class Logger:
             return dis
         return wapper
 
-
     def iteration_logger(self, iteration_func):
         """
         用于修饰算法的每轮更新函数，修饰器做以下事情：
         1. 记录当前最优解的评价结果（distance）历史
         2. 利用索引号(index)，与特征历史对应，记录当前最优解的特征
         """
+        if self.algo_instance is None:
+            return iteration_func
+
         def wapper(*args, **kwargs):
             res = iteration_func(*args, **kwargs)
 
@@ -85,7 +89,6 @@ class Logger:
         3. 距离历史
         4. 平均距离历史
         """
-
         return (
             self.best_x_feature,
             self.best_x_all_feature,
@@ -99,6 +102,5 @@ class Logger:
         self.best_x_all_feature = None
         self.best_x_dis_hist.clear()
         self.avg_dis_hist.clear()
-
 
 logger = Logger()

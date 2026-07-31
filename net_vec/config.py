@@ -51,8 +51,7 @@ class Conf:
             pkt_list: list[Packet] = None,
             last_end_time: EDecimal = None,
         ):
-        r"""参数设置函数
-        默认所有数值为 None，为 None 的数值不会修改目前参数
+        r"""参数设置函数：默认所有数值为 None，为 None 的数值不会修改目前参数
 
         :param max_cft_pkt: 每个原始包对应构建包的最大数量(l_c)
         :param max_cft_pkt_prob: 在 0-1 之间的概率,限制一个slot填入构造包的最大概率,相当于 max_cft_pkt 的最大乘数
