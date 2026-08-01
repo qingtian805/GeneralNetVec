@@ -20,7 +20,7 @@ from manipulator import Manipulator, vec_cfg
 seed(10)
 
 # 底层数据结构设置
-# vec_cfg.
+# vec_cfg.set_config()
 
 algorithum = LBPSO(
     w=0.7298,
