@@ -23,7 +23,9 @@ class Logger:
         """ 记录全部样本的平均 L2 距离历史 """
 
         self.feature_list = []
+        """ 不包含构建包的特征列表 """
         self.all_feature_list = []
+        """ 包含构建包的特征列表 """
         self.dis_sum = 0.
 
         self.eval_instance = None
@@ -59,8 +61,11 @@ class Logger:
     def iteration_logger(self, iteration_func):
         """
         用于修饰算法的每轮更新函数，修饰器做以下事情：
+
         1. 记录当前最优解的评价结果（distance）历史
         2. 利用索引号(index)，与特征历史对应，记录当前最优解的特征
+
+        logger 需要算法实现 get_best_x 函数，具体见 NetAlg 基类中的定义
         """
         if self.algo_instance is None:
             return iteration_func
@@ -68,12 +73,14 @@ class Logger:
         def wapper(*args, **kwargs):
             res = iteration_func(*args, **kwargs)
 
-            best_x_index = self.algo_instance.glob_best_x_index
-            self.best_x_dis_hist.append(self.algo_instance.glob_best_x_dis)
+            _, best_x_dis, best_x_index = self.algo_instance.get_best_x()
+
+            self.best_x_dis_hist.append(best_x_dis)
             self.avg_dis_hist.append(self.dis_sum / len(self.feature_list))
             self.best_x_feature = self.feature_list[best_x_index]
             self.best_x_all_feature = self.all_feature_list[best_x_index]
 
+            # reset logs
             self.dis_sum = 0.
             self.feature_list.clear()
             self.all_feature_list.clear()

@@ -31,8 +31,8 @@ class Unit:
         Unit.craft 构建包成员,数据结构:0 时间 1 协议层数 2 mtu
         一个Unit向量实例表征一条完整的流
         """
-        self.mal = np.zeros((cfg._pkt_num, 2), dtype=np.float64)
-        self.craft = np.zeros((cfg._pkt_num, cfg.max_cft_pkt, 3), dtype=np.float64)
+        self.mal: np.ndarray = np.zeros((cfg._pkt_num, 2), dtype=np.float64)
+        self.craft: np.ndarray = np.zeros((cfg._pkt_num, cfg.max_cft_pkt, 3), dtype=np.float64)
 
     def initialize(self):
         """initialize 负责初始化一个 Unit 类中的 恶意包特征和构建包特征

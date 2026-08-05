@@ -49,7 +49,7 @@ class LBPSO(NetAlg):
 
         self.grp_num = swarm_size // grp_size
 
-    def get_paramter(self):
+    def get_paramters(self):
         return {
             "w": self.w,
             "c1": self.c1,
@@ -58,6 +58,11 @@ class LBPSO(NetAlg):
             "swarm_size": self.swarm_size,
             "grp_size": self.grp_size,
             }
+
+    def get_best_x(self):
+        return (self.glb_bestx,
+                self.glb_bestx_dis,
+                self.glb_bestx_index)
 
     def _generate_V(self, x: Unit, best_x: Unit):
         """生成指向最优解的方向 V, 即计算
@@ -143,36 +148,27 @@ class LBPSO(NetAlg):
             self._update_group(self.swarm[st:ed], i)
 
             # 如果组内找到的最好要好于全局，则更新全局最好信息
-            if self.grp_bestx_dis[i] < self.glob_best_x_dis:
-                index = self.grp_bestx_index[i] + st
-                self._update_glob_best_x(
-                    self.grp_bestx[i],
-                    self.grp_bestx_dis[i],
-                    index
-                    )
-
+            if self.grp_bestx_dis[i] < self.glb_bestx_dis:
+                self.glb_bestx = self.grp_bestx[i]
+                self.glb_bestx_dis = self.grp_bestx_dis[i]
+                self.glb_bestx_index = self.grp_bestx_index[i] + st
 
     def execute(self):
         # initialize
-        self._reset_glob_best_x()
-        self.grp_bestx = [None] * self.grp_num # type: list[Unit]
-        self.grp_bestx_dis = [np.inf] * self.grp_num
-        self.grp_bestx_index = [-1] * self.grp_num
+        self.glb_bestx: Unit = None
+        self.glb_bestx_dis: float = np.inf
+        self.glb_bestx_index: int = -1
+        self.grp_bestx: list[Unit | None] = [None] * self.grp_num
+        self.grp_bestx_dis: list[float] = [np.inf] * self.grp_num
+        self.grp_bestx_index: list[int] = [-1] * self.grp_num
 
         self.swarm = []
         for _ in range(self.swarm_size):
             self.swarm.append(Partical())
 
         # start iteration
-        iter = 0
-        while True:
+
+        for _ in range(self.iter):
             self._iteration()
 
-            iter += 1
-            if iter >= self.iter:
-                break
-        # 算法迭代结束，提取最好的结果
-        cur_end_time = self.glob_best_x.mal[-1][0]
-        ics_time = cur_end_time - float(cfg.pkt_list[-1].time)
-
-        return ics_time, cur_end_time, self.glob_best_x
+        return self.glb_bestx

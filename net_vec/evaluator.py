@@ -21,9 +21,11 @@ class Evaluator:
         """
         self.set_mimic_set(mimic_set_file)
 
-        # logger API, 分别为不包含和包含构建包的流量特征列表
+        # logger API
         self.feature: list | None = None
+        """ 不包含构建包的流量特征列表 """
         self.all_feature: list | None = None
+        """ 包含构建包的流量特征列表 """
 
     def forward(self, grp_best_pkt_list: PacketList):
         """

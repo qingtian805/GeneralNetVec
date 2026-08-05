@@ -56,7 +56,7 @@ class Manipulator:
         f.write(f"Algorithum:\t{type(self.alg)}")
         f.write(f"Evaluator:\t{type(self.eval)}")
         f.write("AlgParamters:")
-        for key, value in self.alg.get_paramter().items():
+        for key, value in self.alg.get_paramters().items():
             f.write(f"    {key}:\t {value}")
         f.write("VecParameters:")
         for key, value in cfg.__dict__.items():
@@ -113,7 +113,10 @@ class Manipulator:
                 p.time = p.time + acc_ics_time
             cfg.set_pkt_list(grp_pkt_list, last_end_time)
 
-            acc_time, last_end_time, best_x = self.alg.execute()
+            best_x = self.alg.execute()
+            # 算法迭代结束，根据结果获取时间修正参数
+            cur_end_time = best_x.mal[-1][0]
+            acc_time = cur_end_time - float(cfg.pkt_list[-1].time)
 
             acc_ics_time += acc_time
 
