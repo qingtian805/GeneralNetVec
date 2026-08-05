@@ -19,6 +19,7 @@ from net_vec.pygmo import (
 
 
 set_pkt_list(rdpcap("test/test.pcap"))
+set_pkt_list(rdpcap("test/test.pcap"))
 
 evaluator = KitsuneEval(
     model_save_path="exp_file/models/Kitsune/TM_ben.pkl",
@@ -37,13 +38,18 @@ seed(100)
 
 x = Unit()
 x.initialize()
-# print(x.craft)
+print(x.mal)
+print(x.craft)
 
-# res = flatten(x)
-# print(res)
+res = flatten(x)
+print(res)
 
-uls = []
-uls.append(x)
-pop = vec_to_pop(uls, prob)
+y = deflatten(res)
+print(y.mal)
+print(y.craft)
 
-print(pop)
+# uls = []
+# uls.append(x)
+# pop = vec_to_pop(uls, prob)
+
+# print(pop)

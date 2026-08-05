@@ -3,7 +3,7 @@ import string
 import copy
 import numpy as np
 
-from scapy.packet import Raw
+from scapy.packet import Raw, Packet
 
 from .config import cfg
 
@@ -91,13 +91,15 @@ class Unit:
             # 计算时间、协议层数、随机MTU并填充
             mtu = cfg.data_max_lmt[round(cfg._proto_max_lmt[nxt_mal_no])]
             self.craft[nxt_mal_no][cft_no][0] = self.mal[nxt_mal_no][0] - slot_time
-            self.craft[nxt_mal_no][cft_no][1] = random.choice(np.arange(cfg.proto_min_lmt, cfg._proto_max_lmt[nxt_mal_no]))
+            self.craft[nxt_mal_no][cft_no][1] = random.choice(np.arange(cfg.proto_min_lmt, cfg._proto_max_lmt[nxt_mal_no] + 1))
             self.craft[nxt_mal_no][cft_no][2] = random.uniform(cfg.data_min_lmt, mtu)
 
             # 更新对应恶意流量包的构造包数量
             self.mal[nxt_mal_no][1] += 1.
 
-    def rebuild(self):
+        return self
+
+    def rebuild(self) -> list[Packet]:
         """rebuild 将Unit重建为网络流量,重构结果为 ...X.craft[i] + X.mal[i] + X.craft[i+1] X.mal[i+1]...
 
         :return: 重建后的流量列表

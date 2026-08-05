@@ -6,9 +6,6 @@ from .evaluator import Evaluator
 from scapy.utils import EDecimal
 from scapy.packet import Packet
 
-mal_restrict: list | None = None
-cft_restrict: list | None = None
-
 restrict: list[list] = [[], []] # [[lower_bound], [upper_bound]]
 
 def set_pkt_list(pkt_list: list[Packet], last_end_time: EDecimal = None):
@@ -17,9 +14,11 @@ def set_pkt_list(pkt_list: list[Packet], last_end_time: EDecimal = None):
 
     1. 完成用于 Pygmo2 库的上下限计算
     """
-    global mal_restrict, cft_restrict, restrict
+    global restrict
 
     cfg.set_pkt_list(pkt_list, last_end_time)
+
+    restrict = [[], []] # [[lower_bound], [upper_bound]]
 
     max_mal_itv = (cfg.pkt_list[-1].time - cfg.last_end_time) * (cfg.max_time_extend + 1)
     mal_itv_lmt = max_mal_itv / cfg.fence_time_divider
