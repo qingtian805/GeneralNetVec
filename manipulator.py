@@ -113,9 +113,9 @@ class Manipulator:
                 p.time = p.time + acc_ics_time
             cfg.set_pkt_list(grp_pkt_list, last_end_time)
 
-            acc_time, last_end_time, best_x = self.alg.execute()
+            ics_time, last_end_time, best_x = self.alg.execute()
 
-            acc_ics_time += acc_time
+            acc_ics_time += ics_time
 
             # Prepare evaluator for next group
             new_pkt_list = best_x.rebuild()
