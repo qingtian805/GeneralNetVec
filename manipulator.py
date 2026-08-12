@@ -106,7 +106,7 @@ class Manipulator:
 
         for st in range(start, end, self.grp_pkt_num):
             ed = st + self.grp_pkt_num
-            print(f"Processing packet num {st}-{ed}...")
+            print(f"Processing packet num {st + 1}-{ed}, total: {end}...", end="\r")
             grp_pkt_list = self.pkt_list[st:ed]
 
             for p in grp_pkt_list:
