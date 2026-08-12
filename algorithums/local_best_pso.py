@@ -149,7 +149,7 @@ class LBPSO(NetAlg):
 
             # 如果组内找到的最好要好于全局，则更新全局最好信息
             if self.grp_bestx_dis[i] < self.glb_bestx_dis:
-                self.glb_bestx = self.grp_bestx[i]
+                self.glb_bestx = deepcopy(self.grp_bestx[i])
                 self.glb_bestx_dis = self.grp_bestx_dis[i]
                 self.glb_bestx_index = self.grp_bestx_index[i] + st
 

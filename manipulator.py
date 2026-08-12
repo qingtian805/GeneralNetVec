@@ -115,8 +115,8 @@ class Manipulator:
 
             best_x = self.alg.execute()
             # 算法迭代结束，根据结果获取时间修正参数
-            cur_end_time = best_x.mal[-1][0]
-            ics_time = cur_end_time - float(cfg.pkt_list[-1].time)
+            last_end_time = best_x.mal[-1][0]
+            ics_time = last_end_time - float(cfg.pkt_list[-1].time)
 
             acc_ics_time += ics_time
 
