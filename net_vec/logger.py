@@ -1,7 +1,7 @@
 import numpy as np
 
 from copy import deepcopy
-from .algorithum import NetAlg
+from .algorithm import NetAlg
 from .evaluator import Evaluator
 
 class Logger:
@@ -35,9 +35,9 @@ class Logger:
         """ 设置被记录的评价器 """
         self.eval_instance = evaluator
 
-    def set_algorithum(self, algorithum: NetAlg):
+    def set_algorithm(self, algorithm: NetAlg):
         """ 设置被记录的算法 """
-        self.algo_instance = algorithum
+        self.algo_instance = algorithm
 
     def evaluate_logger(self, eval_func):
         """

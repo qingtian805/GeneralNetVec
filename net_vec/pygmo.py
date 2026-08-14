@@ -93,7 +93,8 @@ class generation_problem:
         """将流量优化问题定义转移到 Pygmo2 中
         """
         if cfg._pkt_num is None:
-            print("Use warning: Please set pkt_list in config!")
+            print("ERROR: Please set pkt_list in config before calling PYGMO!")
+            exit(1)
 
         self.dims = cfg._pkt_num * (2 + cfg.max_cft_pkt * 3)
         self.evaluator = evaluator

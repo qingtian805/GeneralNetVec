@@ -24,7 +24,7 @@ class TestEval(Evaluator):
 test_eval = TestEval()
 test_algo = TestAlg()
 
-logger.set_algorithum(test_algo)
+logger.set_algorithm(test_algo)
 logger.set_evaluator(test_eval)
 
 test_eval.evaluate(1)

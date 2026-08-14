@@ -5,5 +5,6 @@
 """
 
 from .local_best_pso import LBPSO
+from .pygmo_ifce import PygmoPort
 
-__all__ = ["LBPSO"]
+__all__ = ["LBPSO", "PygmoPort"]

@@ -12,14 +12,14 @@ class Manipulator:
     def __init__(
             self,
             mal_pcap_file: str,
-            algorithum: NetAlg,
+            algorithm: NetAlg,
             evaluator: Evaluator,
             grp_pkt_num: int,
             ):
         """网络异常流量变异器，使用指定的算法与评价器完成异常流量对抗样本生成
 
         :param mal_pcap_file: 恶意流量存储路径
-        :param algorithum: 一个基于 net_vec.algorithum.NetAlg 实现的优化算法
+        :param algorithm: 一个基于 net_vec.algorithm.NetAlg 实现的优化算法
         :param evaluator: 一个基于 net_vec.evaluator.Evaluator 实现的评价器
         :param grp_pkt_num: 超参数，同时进行变异的恶意流量包数
         """
@@ -27,11 +27,11 @@ class Manipulator:
         with open(mal_pcap_file, "rb") as f:
             self.pkt_list = rdpcap(f)
 
-        self.alg = algorithum
+        self.alg = algorithm
         self.eval = evaluator
 
         # init logger
-        logger.algo_instance = algorithum
+        logger.algo_instance = algorithm
         logger.eval_instance = evaluator
 
         self.alg.evaluator = evaluator
@@ -53,7 +53,7 @@ class Manipulator:
         f = open(save_path, "a")
 
         f.write(f"Time Spent: {self.time_spend}")
-        f.write(f"Algorithum:\t{type(self.alg)}")
+        f.write(f"Algorithm:\t{type(self.alg)}")
         f.write(f"Evaluator:\t{type(self.eval)}")
         f.write("AlgParamters:")
         for key, value in self.alg.get_paramters().items():

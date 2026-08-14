@@ -1,11 +1,11 @@
 from random import seed
-from algorithums import LBPSO
+from algorithms import LBPSO
 from evaluators import KitsuneEval
 from manipulator import Manipulator, vec_cfg
 
 """网络异常流量生成总控台，在这里完成所有有关异常流量对抗样本生成的设置：
 1. 选择与设置算法
-    * 从 algorithums 中选择一个实现好的算法
+    * 从 algorithms 中选择一个实现好的算法
     * 使用算法类初始化函数完成算法参数设置
 2. 选择评价指标
     * 从 evaluators 中选择一个实现好的评价器
@@ -22,15 +22,6 @@ seed(10)
 # 底层数据结构设置
 # vec_cfg.set_config()
 
-algorithum = LBPSO(
-    w=0.7298,
-    c1=0.89618,
-    c2=0.89618,
-    iter=3,
-    swarm_size=12,
-    grp_size=6
-)
-
 evaluator = KitsuneEval(
     model_save_path="exp_file/models/Kitsune/TM_ben.pkl",
     feature_path="TrafficManipulator/example/train_ben.npy",
@@ -40,9 +31,21 @@ evaluator = KitsuneEval(
     init_pcap_in=None
 )
 
+# algorithm = LBPSO(
+#     w=0.7298,
+#     c1=0.89618,
+#     c2=0.89618,
+#     iter=3,
+#     swarm_size=12,
+#     grp_size=6
+# )
+
+from algorithms import PygmoPort
+algorithm = PygmoPort()
+
 m = Manipulator(
     mal_pcap_file="exp_file/mal/mal.pcap",
-    algorithum=algorithum,
+    algorithm=algorithm,
     evaluator=evaluator,
     grp_pkt_num=100,
 )
