@@ -41,7 +41,17 @@ evaluator = KitsuneEval(
 # )
 
 from algorithms import PygmoPort
-algorithm = PygmoPort()
+import pygmo as pg
+algorithm = PygmoPort(
+    algo=pg.pso,
+    algo_param={
+        "gen": 3,
+        "omega": 0.7298,
+        "eta1": 0.89618,
+        "eta2": 0.89618
+    },
+    pop_size=6
+)
 
 m = Manipulator(
     mal_pcap_file="exp_file/mal/mal.pcap",
@@ -49,7 +59,6 @@ m = Manipulator(
     evaluator=evaluator,
     grp_pkt_num=100,
 )
-
 
 m.manipulate()
 m.dump_sta("statistics.pkl")

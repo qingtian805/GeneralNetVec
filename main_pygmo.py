@@ -41,7 +41,6 @@ for st in range(start, end, grp_pkt_num):
 
     # acc_time, last_end_time, best_x = self.alg.execute()
     # 初始化染色体
-    uls = [Unit().initialize() for _ in range(pop_size)]
     prob = pg.problem(generation_problem(evaluator))
     pop = pg.population(prob, 0)
     for i in range(pop_size):

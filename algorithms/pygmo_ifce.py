@@ -37,6 +37,23 @@ def deflatten(x: np.ndarray) -> Unit:
     return res
 
 class generation_problem:
+    restrict: list[list] = [[], []] # [[lower_bound], [upper_bound]]
+
+    def _cal_restriction_vector(self):
+        self.restrict = [[], []] # [[lower_bound], [upper_bound]]
+
+        max_mal_itv = (cfg.pkt_list[-1].time - cfg.last_end_time) * (cfg.max_time_extend + 1)
+        mal_itv_lmt = max_mal_itv / cfg.fence_time_divider
+        cft_itv_lmt = mal_itv_lmt / cfg.cft_time_divider
+
+        for i in range(cfg._pkt_num):
+            for _ in range(cfg.max_cft_pkt):
+                self.restrict[0] += [cft_itv_lmt, cfg.proto_min_lmt, cfg.data_min_lmt]
+                self.restrict[1] += [max_mal_itv, cfg._proto_max_lmt[i], cfg.data_max_lmt[round(cfg._proto_max_lmt[i])]]
+
+            self.restrict[0] += [mal_itv_lmt, 0]
+            self.restrict[1] += [max_mal_itv, cfg.max_cft_pkt]
+
     def __init__(self, evaluator: Evaluator):
         """将流量优化问题定义转移到 Pygmo2 中
         """
@@ -47,6 +64,8 @@ class generation_problem:
         self.dims = cfg._pkt_num * (2 + cfg.max_cft_pkt * 3)
         self.evaluator = evaluator
 
+        self._cal_restriction_vector()
+
     def fitness(self, x):
         if x is None:
             return None
@@ -55,8 +74,7 @@ class generation_problem:
         return [self.evaluator.evaluate(u)]
 
     def get_bounds(self):
-        global restrict
-        return restrict
+        return self.restrict
 
 class PygmoPort(NetAlg):
     """
