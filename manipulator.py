@@ -2,7 +2,7 @@ import time
 from pickle import dump
 from scapy.utils import rdpcap, wrpcap
 
-from net_vec import NetAlg, Evaluator, logger, cfg
+from net_vec import NetAlg, Evaluator, log, cfg
 
 vec_cfg = cfg
 """ 底层向量数据结构设置，影响流量与向量的双向映射 """
@@ -27,17 +27,11 @@ class Manipulator:
         with open(mal_pcap_file, "rb") as f:
             self.pkt_list = rdpcap(f)
 
+        algorithm.set_evaluator(evaluator)
+
         self.alg = algorithm
         self.eval = evaluator
-
-        # init logger
-        logger.algo_instance = algorithm
-        logger.eval_instance = evaluator
-
-        self.alg.evaluator = evaluator
-
         self.grp_pkt_num = grp_pkt_num
-
         # log
         self.sta_best_x = []
         self.sta_feature_list = []
@@ -127,8 +121,8 @@ class Manipulator:
             # log status
             self.best_pkt_list += new_pkt_list
             self.sta_best_x.append(best_x)
-            feature, all_feature, dis_list, avg_dis_list = logger.get_log()
-            logger.clear()
+            feature, all_feature, dis_list, avg_dis_list = log.get_log()
+            log.clear()
             self.sta_feature_list.append(feature)
             self.sta_all_feature_list.append(all_feature)
             self.sta_glob_dis_list.append(dis_list)

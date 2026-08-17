@@ -7,7 +7,7 @@ import pygmo as pg
 from scapy.utils import rdpcap
 from net_vec import cfg
 from net_vec.vector import Unit
-from net_vec.logger import logger
+from net_vec.log import logger
 from evaluators import KitsuneEval
 from net_vec.pygmo import (
     flatten,

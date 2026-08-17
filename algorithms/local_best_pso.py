@@ -2,7 +2,7 @@ import random
 from copy import deepcopy
 import numpy as np
 
-from net_vec import NetAlg, Unit, cfg, logger
+from net_vec import NetAlg, Unit, cfg, log
 
 class Partical:
     def __init__(self):
@@ -140,7 +140,7 @@ class LBPSO(NetAlg):
             self._update_V(p, self.grp_bestx[grp_index])
             self._update_X(p)
 
-    @logger.iteration_logger
+    @log.iteration_logger
     def _iteration(self):
         for i in range(self.grp_num):
             st = i * self.grp_size

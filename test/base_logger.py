@@ -1,11 +1,11 @@
 import sys, os
 sys.path.append(f"{os.path.abspath(".")}")
-from net_vec import NetAlg, Evaluator, logger
+from net_vec import NetAlg, Evaluator, log
 
 class TestAlg(NetAlg):
     def __init__(self):
         pass
-    @logger.iteration_logger
+    @log.iteration_logger
     def update(self):
         self.glob_best_x = 1
         self.glob_best_x_dis = 0.5
@@ -15,7 +15,7 @@ class TestEval(Evaluator):
     def __init__(self):
         pass
 
-    @logger.evaluate_logger
+    @log.evaluate_logger
     def evaluate(self, x):
         self.feature = [1,2]
         self.all_feature = [1,2,3]
@@ -24,13 +24,13 @@ class TestEval(Evaluator):
 test_eval = TestEval()
 test_algo = TestAlg()
 
-logger.set_algorithm(test_algo)
-logger.set_evaluator(test_eval)
+log.set_algorithm(test_algo)
+log.set_evaluator(test_eval)
 
 test_eval.evaluate(1)
-for key, value in logger.__dict__.items():
+for key, value in log.__dict__.items():
     print(f"{key}:\t{value}")
 
 test_algo.update()
-for key, value in logger.__dict__.items():
+for key, value in log.__dict__.items():
     print(f"{key}:\t{value}")

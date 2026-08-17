@@ -12,12 +12,12 @@ from .vector import Unit
 from .algorithm import NetAlg
 from .evaluator import Evaluator
 from .examinator import Examinator, OLExaminator
-from .logger import logger
+from .logger import log
 
 __all__ = ["cfg",
            "Unit",
            "NetAlg",
            "Evaluator",
            "Examinator", "OLExaminator",
-           "logger",
+           "log",
            ]

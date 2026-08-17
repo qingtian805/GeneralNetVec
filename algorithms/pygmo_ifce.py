@@ -1,7 +1,7 @@
 from copy import deepcopy
 import numpy as np
 import pygmo as pg
-from net_vec import NetAlg, cfg, Unit, Evaluator, logger
+from net_vec import NetAlg, cfg, Unit, Evaluator, log
 
 def flatten(x: Unit) -> np.ndarray:
     dims = 2 + cfg.max_cft_pkt * 3
@@ -120,7 +120,7 @@ class PygmoPort(NetAlg):
 
         return (self.pop.getx()[idx], self.pop.getf()[idx], idx)
 
-    @logger.iteration_logger
+    @log.iteration_logger
     def _iteration(self):
         self.pop = self.algo.evolve(self.pop)
 

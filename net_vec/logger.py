@@ -28,32 +28,19 @@ class Logger:
         """ 包含构建包的特征列表 """
         self.dis_sum = 0.
 
-        self.eval_instance = None
-        self.algo_instance = None
-
-    def set_evaluator(self, evaluator: Evaluator):
-        """ 设置被记录的评价器 """
-        self.eval_instance = evaluator
-
-    def set_algorithm(self, algorithm: NetAlg):
-        """ 设置被记录的算法 """
-        self.algo_instance = algorithm
-
     def evaluate_logger(self, eval_func):
         """
         用于修饰样本评价函数，修饰器做以下事情：
         1. 记录评价函数输出的历史之和用于计算优化过程中的距离均值
         2. 记录来自评价器的 feature 和 all_feature 对象
         """
-        if self.eval_instance is None:
-            return eval_func
-
         def wapper(*args, **kwargs):
             dis = eval_func(*args, **kwargs)
+            feature, all_feature = args[0].get_feature()
 
             self.dis_sum += dis
-            self.feature_list.append(self.eval_instance.feature)
-            self.all_feature_list.append(self.eval_instance.all_feature)
+            self.feature_list.append(feature)
+            self.all_feature_list.append(all_feature)
 
             return dis
         return wapper
@@ -67,13 +54,10 @@ class Logger:
 
         logger 需要算法实现 get_best_x 函数，具体见 NetAlg 基类中的定义
         """
-        if self.algo_instance is None:
-            return iteration_func
-
         def wapper(*args, **kwargs):
             res = iteration_func(*args, **kwargs)
 
-            _, best_x_dis, best_x_index = self.algo_instance.get_best_x()
+            _, best_x_dis, best_x_index = args[0].get_best_x()
 
             self.best_x_dis_hist.append(best_x_dis)
             self.avg_dis_hist.append(self.dis_sum / len(self.feature_list))
@@ -110,4 +94,4 @@ class Logger:
         self.best_x_dis_hist.clear()
         self.avg_dis_hist.clear()
 
-logger = Logger()
+log = Logger()

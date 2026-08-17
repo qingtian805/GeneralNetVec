@@ -14,7 +14,7 @@ class NetAlg:
 
     * 构造函数 `__init__` 完成算法参数的设置，调用基类 __init__ 完成评估器设置
     * 实现获取算法参数的函数 `get_paramters`
-    * 实现一个 `_iteration` 内部迭代函数，使用 logger.iteration_logger 修饰
+    * 实现一个 `_iteration` 内部迭代函数，使用 log.iteration_logger 修饰
     * 实现一个获取当前最佳向量的函数 `get_best_x`，函数应该返回的距离、序号
     """
     def __init__(
@@ -36,11 +36,11 @@ class NetAlg:
     def _iteration(self):
         """
         算法实现中应该实现一个轮函数，功能为算法单轮迭代的步骤实现
-        这个函数应该使用 Logger.iteration_logger 修饰
+        这个函数应该使用 log.iteration_logger 修饰
         """
         pass
 
-    def get_best_x():
+    def get_best_x(self):
         """
         [Logger API]
         算法应该实现一个能够获取自身当前最好数据的有关内容，包含

@@ -8,7 +8,8 @@ with open("statistics.pkl", "rb") as f:
     glob_dis_list = pkl.load(f)
     avg_dis_list = pkl.load(f)
 
-print(glob_dis_list[2])
-print(avg_dis_list[2])
-# print(x_list[0].mal[0][0])
-# print(x_list[1].mal[0][0])
+print(x_list)
+print(feature_list)
+print(all_feature_list)
+print(glob_dis_list)
+print(avg_dis_list)

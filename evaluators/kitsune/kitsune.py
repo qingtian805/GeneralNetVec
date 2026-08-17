@@ -7,7 +7,7 @@ from scapy.all import PacketList
 from .AfterImageExtractor.FEKitsune import Kitsune
 from .AfterImageExtractor.KitsuneTools import *
 
-from net_vec import Evaluator, Unit, cfg, logger
+from net_vec import Evaluator, Unit, cfg, log
 
 def flatten(item:Iterable, ignore_types=(str, bytes)):
     res = []
@@ -126,7 +126,10 @@ class KitsuneEval(Evaluator):
             self.global_FE = Kitsune(rdpcap(init_pcap_in), np.inf)
             RunFE(self.global_FE)
 
-    @logger.evaluate_logger
+        self.feature = None
+        self.all_feature = None
+
+    @log.evaluate_logger
     def evaluate(self, x: Unit):
         """
         距离估计函数，计算当前特征与良性流量特征（全部）的 L2 距离(最大最小正则化后)
@@ -151,9 +154,9 @@ class KitsuneEval(Evaluator):
         # and backup() will be called, which will restore status stored in backup1 and backup2
         local_FE = Kitsune(pkt_list, np.inf, True)
         local_FE.FE.nstat = safelyCopyNstat(self.global_FE.FE.nstat, True)
-        feature, all_feature = RunFE(local_FE, origin_pos=mal_pos)
+        self.feature, self.all_feature = RunFE(local_FE, origin_pos=mal_pos)
 
-        feature = np.asarray(feature)
+        feature = np.asarray(self.feature)
         # 将皮尔森系数设为 0？
         feature[:, 33:50:4] = 0.
         feature[:, 83:100:4] = 0.
@@ -167,6 +170,9 @@ class KitsuneEval(Evaluator):
                                      axis=1))
 
         return dis
+
+    def get_feature(self):
+        return (self.feature, self.all_feature)
 
     def forward(self, best_pkt_list: PacketList):
         """
