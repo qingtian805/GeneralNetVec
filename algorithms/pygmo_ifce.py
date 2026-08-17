@@ -118,7 +118,7 @@ class PygmoPort(NetAlg):
     def get_best_x(self):
         idx = self.pop.best_idx()
 
-        return (self.pop.getx()[idx], self.pop.getf()[idx], idx)
+        return (self.pop.get_x()[idx], self.pop.get_f()[idx], idx)
 
     @log.iteration_logger
     def _iteration(self):
