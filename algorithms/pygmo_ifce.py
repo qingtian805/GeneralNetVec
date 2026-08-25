@@ -140,5 +140,6 @@ class PygmoPort(NetAlg):
         best_x = self.pop.get_x()[self.pop.best_idx()]
         # Prepare evaluator for next group
         best_x_unit = deflatten(best_x)
+        best_x_unit.restrict()
 
         return best_x_unit
