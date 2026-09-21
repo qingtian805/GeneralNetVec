@@ -27,12 +27,13 @@ def random_bytes(length):
 class Unit:
     def __init__(self):
         """Unit类 是用于存储包特征的类,包含两个成员
-        Unit.mal 恶意包成员,数据结构:0 时间 1 包含的构建包
-        Unit.craft 构建包成员,数据结构:0 时间 1 协议层数 2 mtu
+        Unit.mal 恶意包成员,数据结构:0 正向相对时间 1 包含的构建包
+        Unit.craft 构建包成员,数据结构:0 正向相对时间 1 协议层数 2 mtu
         一个Unit向量实例表征一条完整的流
         """
-        self.mal: np.ndarray = np.zeros((cfg._pkt_num, 2), dtype=np.float64)
-        self.craft: np.ndarray = np.zeros((cfg._pkt_num, cfg.max_cft_pkt, 3), dtype=np.float64)
+        self.data: np.ndarray = np.zeros((cfg._pkt_num * (2 + cfg.max_cft_pkt * 3)), dtype=np.float64)
+        self.mal: np.ndarray = self.data.reshape((-1, 2 + cfg.max_cft_pkt * 3))[:, -2:]
+        self.craft: np.ndarray = self.data.reshape((-1, 2 + cfg.max_cft_pkt * 3))[:, : cfg.max_cft_pkt * 3].reshape((-1, cfg.max_cft_pkt, 3))
 
     def initialize(self):
         """initialize 负责初始化一个 Unit 类中的 恶意包特征和构建包特征
@@ -43,59 +44,26 @@ class Unit:
         每个构造包最大拥有max_cft_pkt个包,并将原始包的时间间隔拉长 max_time_extend 倍，方便插入构造包
         """
 
-        ics_time = 0  # accumulated increased ITA 初始时间对齐时间累加器
         last_mal_time = cfg.last_end_time
 
         # 计算整个流的最大时间长度，+1 的原因是增加原始流量的时间
-        max_mal_itv = (cfg.pkt_list[-1].time - cfg.last_end_time) * (cfg.max_time_extend + 1)
+        crafted_pkt_prob = random.uniform(0, cfg.max_cft_pkt_prob)
+
         # 初始化流量时间序列，
         for i in range(cfg._pkt_num):
-            # 计算距离上个包的时间（itv）
+            # 随机延长包间隔时间，引入随机性，插入构建包
             itv = cfg.pkt_list[i].time - last_mal_time
+            self.mal[i][0] = itv + itv * random.uniform(cfg.min_time_extend, cfg.max_time_extend)
             last_mal_time = cfg.pkt_list[i].time
 
-            # 随机延长包间隔时间，引入随机性，插入构建包
-            ics_time += random.uniform(cfg.min_time_extend, cfg.max_time_extend) * itv
-            self.mal[i][0] = cfg.pkt_list[i].time + ics_time
+            # Build cft packets
+            k = sum(1 for _ in range(cfg.max_cft_pkt) if decide_has_pkt(crafted_pkt_prob))
 
-        # building slot map，构建包的位置：每个包之间都可能插入新包，且数量为 max_cft_pkt 倍
-        # Slot_itv 是每个槽位的时间间隔
-        slot_num = cfg._pkt_num * cfg.max_cft_pkt
-        slot_itv = max_mal_itv / slot_num
-
-        # initializing crafted pkts 构建协议层数列表：将每个包的协议层数对应构建的列表
-        crafted_pkt_prob = random.uniform(0, cfg.max_cft_pkt_prob)
-        nxt_mal_no = 0
-
-        # 根据最大协议层数逐个槽位构建构造包
-        # nxt_mal_no 是下一个恶意包的序号,表示当前构造的包属于哪一个恶意包
-        for i in range(slot_num):
-            # 按照固定的时间间隔构建包，如果构建包的时间超过了恶意包的时间，则进入下一个槽位组，在最后一个恶意包位置退出
-            slot_time = i * slot_itv + cfg.last_end_time
-            while nxt_mal_no < cfg._pkt_num and slot_time >= self.mal[nxt_mal_no][0]:
-                nxt_mal_no += 1
-
-            if nxt_mal_no >= cfg._pkt_num:
-                break
-            # 如果决定不构建包，或当前槽位组包数量达到最大限制（但还有槽位），则继续
-            if (not decide_has_pkt(crafted_pkt_prob)
-                ) or self.mal[nxt_mal_no][1] == cfg.max_cft_pkt:
-                continue
-            # 构建包
-            # mal[n][1] 记录的是构建包的数量，也是一个指向下一个构建包位置的指针
-            cft_no = int(round(self.mal[nxt_mal_no][1]))
-
-            if cfg._proto_max_lmt[nxt_mal_no] == 0.:
-                continue
-
-            # 计算时间、协议层数、随机MTU并填充
-            mtu = cfg.data_max_lmt[round(cfg._proto_max_lmt[nxt_mal_no])]
-            self.craft[nxt_mal_no][cft_no][0] = self.mal[nxt_mal_no][0] - slot_time
-            self.craft[nxt_mal_no][cft_no][1] = random.choice(np.arange(cfg.proto_min_lmt, cfg._proto_max_lmt[nxt_mal_no] + 1))
-            self.craft[nxt_mal_no][cft_no][2] = random.uniform(cfg.data_min_lmt, mtu)
-
-            # 更新对应恶意流量包的构造包数量
-            self.mal[nxt_mal_no][1] += 1.
+            self.mal[i][1] = k
+            for j in range(k):
+                self.craft[i][j][0] = random.uniform(cfg.itv_min_lmt, cfg.itv_max_lmt)
+                self.craft[i][j][1] = random.choice(np.arange(cfg.proto_min_lmt, cfg._proto_max_lmt[i] + 1))
+                self.craft[i][j][2] = random.uniform(cfg.data_min_lmt, cfg.data_max_lmt[round(cfg._proto_max_lmt[i])])
 
         return self
 
@@ -107,6 +75,7 @@ class Unit:
         """
 
         new_list = []
+        last_pkt_time = cfg.last_end_time
         # i+j：遍历所有包
         for i in range(cfg._pkt_num):
             for j in range(int(round(self.mal[i][1]))):
@@ -131,11 +100,13 @@ class Unit:
 
                 # 添加随机内容，内容长度被 MTU 限制
                 pkt.add_payload(random_bytes(int(round(self.craft[i][j][2]))))
-                pkt.time = self.mal[i][0] - self.craft[i][j][0]
+                pkt.time = last_pkt_time + self.craft[i][j][0]
+                last_pkt_time = pkt.time
                 new_list.append(pkt)
             # 在构造包之后添加原始封包
             mal_pkt = copy.deepcopy(cfg.pkt_list[i])
-            mal_pkt.time = self.mal[i][0]
+            mal_pkt.time = last_pkt_time + self.mal[i][0]
+            last_pkt_time = mal_pkt.time
             new_list.append(mal_pkt)
 
         return new_list
@@ -144,27 +115,17 @@ class Unit:
         """约束函数，用于约束向量数据，具体完成以下工作：
 
         1. 时间约束：流量包之间需要满足一个最小时间间隔，根据是原始包还是构建包具体遵守对象有所不同
+            next: 流量包之间需要满足的最小时间间隔直接通过设置获取，原始包和构建包遵循相同约束？
         2. 长度约束：构建包可以改变包长度，但必须满足 cfg.data_min_lmt < x < cfg.data_max_lmt\
         3. 协议层数约束：为了能够构建构建包，其层数必须小于其对应的原始包
         """
-        max_mal_itv = (float(cfg.pkt_list[-1].time) - cfg.last_end_time) * (cfg.max_time_extend + 1)
-        mal_itv_lmt = max_mal_itv / cfg.fence_time_divider
-
-        # calculate max mal time map
-        max_mal_time = [max_mal_itv + cfg.last_end_time - mal_itv_lmt]
-        # 优化：i 始终指向的后一个包, 直接取后一个包的时间, 停止到 1
-        for i in range(cfg._pkt_num - 1, 0, -1):
-            max_time = min(max_mal_time[0], self.mal[i][0]) - mal_itv_lmt
-            max_mal_time.insert(0, max_time)
-
         # start checking process
-        prio_mal_time = cfg.last_end_time
         for i in range(cfg._pkt_num):
             # check mal pkt time
-            if self.mal[i][0] - prio_mal_time < mal_itv_lmt:
-                self.mal[i][0] = prio_mal_time + mal_itv_lmt
-            elif self.mal[i][0] > max_mal_time[i]:
-                self.mal[i][0] = max_mal_time[i]
+            if self.mal[i][0] < cfg.itv_min_lmt:
+                self.mal[i][0] = cfg.itv_min_lmt
+            elif self.mal[i][0] > cfg.itv_max_lmt:
+                self.mal[i][0] = cfg.itv_max_lmt
 
             # check craft pkt num
             if self.mal[i][1] > cfg.max_cft_pkt:
@@ -172,21 +133,7 @@ class Unit:
             elif self.mal[i][1] < 0.:
                 self.mal[i][1] = 0.
 
-            # check craft pkt time
-            # Warning: cft pkt time is how long it is before the mal pkt
-            #          So the check logic is a revers to mal time check which is timestamp
-            cft_itv_lmt = (self.mal[i][0] - prio_mal_time) / cfg.cft_time_divider
-
-            # build max cft time map
-            max_cft_time = [cft_itv_lmt]
-            next_cft_time = 0
-            for j in range(round(self.mal[i][1]) - 1, 0, -1):
-                next_cft_time = self.craft[i][j][0]
-                max_time = max(max_cft_time[0], next_cft_time) + cft_itv_lmt
-                max_cft_time.insert(0, max_time)
-
             # cft checking process
-            prio_cft_time = prio_mal_time
             for j in range(round(self.mal[i][1])):
                 # time check
                 """
@@ -194,10 +141,10 @@ class Unit:
                     |-------------|---------|---------------|
                     cft_itv_lmt   target_itv   cft_itv_lmt
                 """
-                if (self.mal[i][0] - self.craft[i][j][0]) - prio_cft_time < cft_itv_lmt:
-                    self.craft[i][j][0] = self.mal[i][0] - (prio_cft_time + cft_itv_lmt)
-                elif self.craft[i][j][0] < max_cft_time[j]:
-                    self.craft[i][j][0] = max_cft_time[j]
+                if self.craft[i][j][0] < cfg.itv_min_lmt:
+                    self.craft[i][j][0] = cfg.itv_min_lmt
+                elif self.craft[i][j][0] > cfg.itv_max_lmt:
+                    self.craft[i][j][0] = cfg.itv_max_lmt
 
                 # proto check
                 if self.craft[i][j][1] > cfg._proto_max_lmt[i]:
@@ -220,24 +167,19 @@ class Unit:
     def __add__(self, other):
         ret = Unit()
         if isinstance(other, Unit):
-            ret.mal = self.mal + other.mal
-            ret.craft = self.craft + other.craft
+            ret.data = self.data + other.data
         else:
-            ret.mal = self.mal + other
-            ret.craft = self.craft + other
+            ret.data = self.data + other
         return ret
-
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
         ret = Unit()
         if isinstance(other, Unit):
-            ret.mal = self.mal - other.mal
-            ret.craft = self.craft - other.craft
+            ret.data = self.data - other.data
         else:
-            ret.mal = self.mal - other
-            ret.craft = self.craft - other
+            ret.data = self.data - other
         return ret
     def __rsub__(self, other):
         return self.__sub__(other)
@@ -245,11 +187,9 @@ class Unit:
     def __mul__(self, other):
         ret = Unit()
         if isinstance(other, Unit):
-            ret.mal = self.mal * other.mal
-            ret.craft = self.craft * other.craft
+            ret.data = self.data * other.data
         else:
-            ret.mal = self.mal * other
-            ret.craft = self.craft * other
+            ret.data = self.data * other
         return ret
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -257,11 +197,9 @@ class Unit:
     def __truediv__(self, other):
         ret = Unit()
         if isinstance(other, Unit):
-            ret.mal = self.mal / other.mal
-            ret.craft = self.craft / other.craft
+            ret.data = self.data / other.data
         else:
-            ret.mal = self.mal / other
-            ret.craft = self.craft / other
+            ret.data = self.data / other
         return ret
     def __rtruediv__(self, other):
         return self.__truediv__(other)

@@ -100,11 +100,15 @@ class Conf:
         self.max_cft_pkt: int          = 1
         """ 每个原始包对应构建包的最大数量(l_c)   \n 默认值：1 """
         self.max_cft_pkt_prob: float   = 0.01
-        """ 在 0-1 之间的概率,限制一个slot填入构造包的最大概率,相当于 max_cft_pkt 的最大乘数   \n 默认值：0.01 """
+        """ 概率值, 限制一个 slot 填入构造包的最大概率, 相当于 max_cft_pkt 的最大乘数   \n 默认值：0.01 """
         self.max_time_extend: float    = 6.
         """ 新流量相较于原始的时间倍数(l_t)   \n 默认值 6.0 """
         self.min_time_extend: float    = 3.
         """ 新流量相较于原始的时间倍数(l_t)   \n 默认值 3.0 """
+        self.itv_min_lmt: float = 0.
+        """ 流量包时间间隔最小限制   \n 默认值 0 """
+        self.itv_max_lmt: float = 3.
+        """ 流量包时间间隔最大限制，填写允许超时的时间   \n 默认值 60. """
         self.fence_time_divider: int   = 10000
         """ 用于计算原始包之间的最小时间间隔,代表最大允许时间间隔中存在多少个可用时间位置   \n 默认值：10000 """
         self.cft_time_divider: int     = 1000

@@ -10,6 +10,6 @@ exam = KitsuneExam()
 #                  )
 
 exam.load_model("exp_file/models/Kitsune/TM_ben.pkl")
-e = Exam(exam, "statistics.pkl")
+e = Exam(exam, "statistics3.pkl")
 e.exam("exp_file/mal/mal.pcap",
-       "manipulated.pcap")
+       "manipulated3.pcap")

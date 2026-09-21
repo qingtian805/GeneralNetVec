@@ -108,15 +108,16 @@ class Manipulator:
             cfg.set_pkt_list(grp_pkt_list, last_end_time)
 
             best_x = self.alg.execute()
-            # 算法迭代结束，根据结果获取时间修正参数
-            last_end_time = best_x.mal[-1][0]
-            ics_time = last_end_time - float(cfg.pkt_list[-1].time)
-
-            acc_ics_time += ics_time
 
             # Prepare evaluator for next group
             new_pkt_list = best_x.rebuild()
             self.eval.forward(new_pkt_list)
+
+            # 算法迭代结束，根据结果获取时间修正参数
+            last_end_time = new_pkt_list[-1].time
+            ics_time = last_end_time - float(cfg.pkt_list[-1].time)
+
+            acc_ics_time += ics_time
 
             # log status
             self.best_pkt_list += new_pkt_list
@@ -130,4 +131,4 @@ class Manipulator:
 
         timestamp_stop = time.process_time()
         self.time_spend = timestamp_stop - timestamp_start
-        print(f"Process finished, time: {self.time_spend}")
+        print(f"\nProcess finished, time: {self.time_spend}")
