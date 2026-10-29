@@ -1,4 +1,5 @@
 import time
+from os.path import splitext
 from pickle import dump
 from scapy.utils import rdpcap, wrpcap
 
@@ -14,8 +15,8 @@ class Manipulator:
             mal_pcap_file: str,
             algorithm: NetAlg,
             evaluator: Evaluator,
-            grp_pkt_num: int,
-            ):
+            grp_pkt_num: int,):
+
         """网络异常流量变异器，使用指定的算法与评价器完成异常流量对抗样本生成
 
         :param mal_pcap_file: 恶意流量存储路径
@@ -58,7 +59,7 @@ class Manipulator:
 
         f.close()
 
-    def dump_sta(self, sta_path):
+    def dump_sta(self, sta_path: str):
         """ 保存日志文件，包含：
         1. 历史最优样本
         2. 历史最优样本的特征在评价器中的恶意包特征
@@ -68,6 +69,9 @@ class Manipulator:
 
         以上内容通过 pickle 库逐个存储在 sta_path 文件中
         """
+        if splitext(sta_path)[-1] != ".pkl":
+            sta_path += ".pkl"
+
         with open(sta_path, "wb") as f:
             dump(self.sta_best_x, f)
             dump(self.sta_feature_list, f)
@@ -77,14 +81,17 @@ class Manipulator:
 
     def dump_pkt_list(self, pcap_path):
         """ 将最优样本的流量写入 pcap_path 中 """
+        if splitext(pcap_path)[-1] != ".pcap":
+            pcap_path += ".pcap"
+
         with open(pcap_path, "wb") as f:
             wrpcap(f, self.best_pkt_list)
 
     def manipulate(
             self,
             start: int = 0,
-            end: int = None
-            ):
+            end: int = None,):
+
         r"""
         manipulate 执行优化算法，并返回优化结果
         :param start: 变异开始的包序号，首个为 0

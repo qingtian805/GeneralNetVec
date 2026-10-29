@@ -15,12 +15,13 @@ class NetAlg:
     * 构造函数 `__init__` 完成算法参数的设置，调用基类 __init__ 完成评估器设置
     * 实现获取算法参数的函数 `get_paramters`
     * 实现一个 `_iteration` 内部迭代函数，使用 log.iteration_logger 修饰
+    * 实现运行函数 `execute`，函数中完成算法从初始化到结束的一次运行过程
     * 实现一个获取当前最佳向量的函数 `get_best_x`，函数应该返回的距离、序号
     """
     def __init__(
             self,
-            evaluator: Evaluator | None = None,
-        ):
+            evaluator: Evaluator | None = None,):
+
         self.evaluator = evaluator
 
     def set_evaluator(self, evaluator: Evaluator):

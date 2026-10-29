@@ -11,8 +11,8 @@ class OnlineExam(Exam):
             self,
             ol_examinator: OLExaminator,
             batch_size: int = 100,
-            buffer_size: int = 0
-            ):
+            buffer_size: int = 0):
+
         """
         :param ol_examinator: 一个在线评估器，要求能够评价一个 scapy.plist.PacketList
         类型数据

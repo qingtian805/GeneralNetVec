@@ -12,8 +12,8 @@ class Evaluator:
 
     def __init__(
             self,
-            mimic_set_file: str
-        ):
+            mimic_set_file: str,):
+
         """
         评价器基本类，一个评价器包含一套用于评价流量的函数
 

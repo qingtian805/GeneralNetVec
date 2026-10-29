@@ -91,8 +91,7 @@ class KitsuneEval(Evaluator):
             fm_grace: int,
             ad_grace: int,
             mimic_set: np.ndarray,
-            init_pcap_in: str = None
-            ):
+            init_pcap_in: str = None,):
 
         """
         本类使用 AfterImage 特征提取器的特征作为评价指标。

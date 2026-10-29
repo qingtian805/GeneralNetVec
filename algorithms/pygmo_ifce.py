@@ -86,8 +86,8 @@ class PygmoPort(NetAlg):
             algo_param: dict,
             pop_size: int,
             *args,
-            **kwargs
-            ):
+            **kwargs):
+
         """
         :param algo: 用于构建 pg.algorithm, 相当于 `pg.algorithm(algo)`, 请参考 `list of algorithms` 部分
         :param algo_param: 算法使用的参数

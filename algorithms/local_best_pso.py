@@ -26,8 +26,8 @@ class LBPSO(NetAlg):
             swarm_size: int = 6,
             grp_size: int = 3,
             *args,
-            **kwargs
-            ):
+            **kwargs):
+
         """
         本地拓扑PSO算法
 

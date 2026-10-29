@@ -4,11 +4,11 @@ STOP_FLAG = 999999999.
 
 # Input: K
 def RunFE(
-            K,
-            origin_pos=None,
-            output_file=".csv",
-            show_info=False
-          ):
+        K,
+        origin_pos=None,
+        output_file=".csv",
+        show_info=False):
+
     if show_info:
         print("@RunFE: Running Feature Extractor...")
     features = []
