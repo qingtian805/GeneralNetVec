@@ -75,14 +75,8 @@ class LBPSO(NetAlg):
         :type best_X: Unit
         :return: 指向最优解的向量
         :rtype: Unit"""
-        v = Unit()
 
-        # 指向最优解的向量
-        v = best_x - x
-        # v.mal = best_x.mal - x.mal
-        # v.craft = best_x.craft - x.craft
-
-        return v
+        return best_x - x
 
     def _update_V(self, p: Partical, grp_bestx: Unit):
         """
@@ -97,9 +91,6 @@ class LBPSO(NetAlg):
         r2 = random.random()
 
         p.v = self.w * p.v + self.c1 * r1 * cog_V + self.c2 * r2 * soc_V
-
-        # p.v.mal = self.w * p.v.mal + self.c1 * r1 * cog_V.mal + self.c2 * r2 * soc_V.mal
-        # p.v.craft = self.w * p.v.craft + self.c1 * r1 * cog_V.craft + self.c2 * r2 * soc_V.craft
 
     def _update_X(self, p: Partical):
         """根据V更新X,并加入诸多限制,即算法第二步

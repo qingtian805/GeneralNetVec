@@ -1,5 +1,7 @@
+import os.path as path
 from random import seed
-from manipulator import Manipulator, vec_cfg
+from manipulator import Manipulator
+from config import Config
 
 """网络异常流量生成总控台，在这里完成所有有关异常流量对抗样本生成的设置：
 1. 选择与设置算法
@@ -17,8 +19,7 @@ from manipulator import Manipulator, vec_cfg
 
 seed(10)
 
-# 底层数据结构设置
-# vec_cfg.set_config()
+config = Config("config.json")
 
 from evaluators import KitsuneEval
 evaluator = KitsuneEval(
@@ -31,10 +32,18 @@ evaluator = KitsuneEval(
 )
 
 from algorithms import LBPSO
+# algorithm = LBPSO(
+#     w=0.7298,
+#     c1=0.89618,
+#     c2=0.89618,
+#     iter=3,
+#     swarm_size=12,
+#     grp_size=6
+# )
 algorithm = LBPSO(
     w=0.7298,
-    c1=0.89618,
-    c2=0.89618,
+    c1=1.49618,
+    c2=1.49618,
     iter=3,
     swarm_size=12,
     grp_size=6
@@ -61,5 +70,11 @@ m = Manipulator(
 )
 
 m.manipulate()
-m.dump_sta("statistics3.pkl")
-m.dump_pkt_list("manipulated3.pcap")
+
+raw_res  = "exp_file/raw_res"
+exp_name = "new_represent_lbpso_g2"
+
+# m.dump_sta(path.join(raw_res, exp_name, ".pkl"))
+# m.dump_pkt_list(path.join(raw_res, exp_name, ".pcap"))
+m.dump_sta("test1.pkl")
+m.dump_pkt_list("test1.pcap")

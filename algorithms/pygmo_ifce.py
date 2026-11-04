@@ -7,7 +7,7 @@ def flatten(x: Unit) -> np.ndarray:
     dims = 2 + cfg.max_cft_pkt * 3
     res = np.zeros((dims * cfg._pkt_num))
 
-    last_time = cfg.last_end_time
+    last_time = cfg._last_end_time
     for i in range(cfg._pkt_num):
         p = i * dims
         for j in range(cfg.max_cft_pkt):
@@ -25,7 +25,7 @@ def deflatten(x: np.ndarray) -> Unit:
     dims = 2 + cfg.max_cft_pkt * 3
     res = Unit()
 
-    itv = cfg.last_end_time
+    itv = cfg._last_end_time
     for i in range(cfg._pkt_num):
         p = i * dims
         for j in range(cfg.max_cft_pkt):
@@ -42,7 +42,7 @@ class generation_problem:
     def _cal_restriction_vector(self):
         self.restrict = [[], []] # [[lower_bound], [upper_bound]]
 
-        max_mal_itv = (cfg.pkt_list[-1].time - cfg.last_end_time) * (cfg.max_time_extend + 1)
+        max_mal_itv = (cfg._pkt_list[-1].time - cfg._last_end_time) * (cfg.max_time_extend + 1)
         mal_itv_lmt = max_mal_itv / cfg.fence_time_divider
         cft_itv_lmt = mal_itv_lmt / cfg.cft_time_divider
 

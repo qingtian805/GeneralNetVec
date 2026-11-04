@@ -1,0 +1,13 @@
+{
+    "vec_cfg": {
+        "max_cft_pkt": 1,
+        "max_cft_pkt_prob": 0.01,
+        "max_time_extend": 6.0,
+        "min_time_extend": 3.0,
+        "itv_min_lmt": 0.0,
+        "itv_max_lmt": 3.0,
+        "proto_min_lmt": 1.0,
+        "data_max_lmt": 1500.0,
+        "data_min_lmt": 0.0
+    }
+}

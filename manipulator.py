@@ -5,9 +5,6 @@ from scapy.utils import rdpcap, wrpcap
 
 from net_vec import NetAlg, Evaluator, log, cfg
 
-vec_cfg = cfg
-""" 底层向量数据结构设置，影响流量与向量的双向映射 """
-
 class Manipulator:
 
     def __init__(
@@ -43,7 +40,7 @@ class Manipulator:
 
     def save_config(self, save_path):
         """保存当前变异参数到 save_path
-        记录
+        记录实验花费时间、使用的算法、使用的评估器以及算法和向量参数
         """
         f = open(save_path, "a")
 
@@ -122,13 +119,13 @@ class Manipulator:
 
             # 算法迭代结束，根据结果获取时间修正参数
             last_end_time = new_pkt_list[-1].time
-            ics_time = last_end_time - float(cfg.pkt_list[-1].time)
+            ics_time = last_end_time - float(cfg._pkt_list[-1].time)
 
             acc_ics_time += ics_time
 
             # log status
             self.best_pkt_list += new_pkt_list
-            self.sta_best_x.append(best_x)
+            self.sta_best_x.append(best_x.denomalize())
             feature, all_feature, dis_list, avg_dis_list = log.get_log()
             log.clear()
             self.sta_feature_list.append(feature)
