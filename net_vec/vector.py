@@ -72,8 +72,9 @@ class Unit:
         last_pkt_time = cfg._last_end_time
         # i+j：遍历所有包
         for i in range(cfg._pkt_num):
+            p = (2 + cfg.max_cft_pkt * 3) * i
             for j in range(int(round(
-                    data[(2 + cfg.max_cft_pkt * 3) * (i + 1) - 1]))): # mal[i][1]
+                    data[p + cfg.max_cft_pkt * 3 + 1]))): # mal[i][1]
 
                 # 构造包复制原始封包
                 pkt = copy.deepcopy(cfg._pkt_list[i])
@@ -84,7 +85,7 @@ class Unit:
 
                 pkt_layer_num = len(pkt_layers)
                 target_layer_num = round(
-                    data[(2 + cfg.max_cft_pkt * 3) * i + 3 * j + 1])  # craft[i][j][1]
+                    data[p + 3 * j + 1])  # craft[i][j][1]
 
                 if target_layer_num not in (1,2,3):
                     raise RuntimeError("Error when rebuilding Unit!")
@@ -97,14 +98,13 @@ class Unit:
 
                 # 添加随机内容，内容长度被 MTU 限制
                 pkt.add_payload(random_bytes(int(round(
-                    data[(2 + cfg.max_cft_pkt * 3) * i + 3 * j + 2])))) # craft[i][j][2]
-                pkt.time = (last_pkt_time
-                           + data[(2 + cfg.max_cft_pkt + 3) + 3 * j])  # craft[i][j][0]
+                    data[p + 3 * j + 2])))) # craft[i][j][2]
+                pkt.time = (last_pkt_time + data[p + 3 * j])  # craft[i][j][0]
                 last_pkt_time = pkt.time
                 new_list.append(pkt)
             # 在构造包之后添加原始封包
             mal_pkt = copy.deepcopy(cfg._pkt_list[i])
-            mal_pkt.time = last_pkt_time + data[(2 + cfg.max_cft_pkt * 3) * (i + 1) - 2] # mal[i][0]
+            mal_pkt.time = last_pkt_time + data[p + cfg.max_cft_pkt * 3] # mal[i][0]
             last_pkt_time = mal_pkt.time
             new_list.append(mal_pkt)
 
