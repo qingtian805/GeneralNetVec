@@ -184,3 +184,8 @@ class Unit:
         else:
             np.pow(other, self.data, out=ret.data)
         return ret
+
+    def __neg__(self):
+        ret = Unit()
+        np.negative(self.data, out=ret.data)
+        return ret

@@ -37,6 +37,7 @@ class NetAlg:
     def _iteration(self):
         """
         算法实现中应该实现一个轮函数，功能为算法单轮迭代的步骤实现
+
         这个函数应该使用 log.iteration_logger 修饰
         """
         pass
@@ -44,17 +45,23 @@ class NetAlg:
     def get_best_x(self):
         """
         [Logger API]
+
         算法应该实现一个能够获取自身当前最好数据的有关内容，包含
 
         * 最好向量
         * 相关距离
         * 序号
+
+        :return: 一个包含三个成员 (最好向量、其距离、其序号) 的元组
+        :rtype: tuple[Unit, float, int]
         """
         pass
 
     def execute(self) -> Unit:
         """
         优化算法执行函数，应当包含**数据结构初始化**在内的算法一切步骤
-        函数应返回最好的向量
+
+        :return: 返回最好的向量
+        :rtype: Unit
         """
         pass

@@ -153,9 +153,7 @@ class LBPSO(NetAlg):
         self.grp_bestx_dis: list[float] = [np.inf] * self.grp_num
         self.grp_bestx_index: list[int] = [-1] * self.grp_num
 
-        self.swarm = []
-        for _ in range(self.swarm_size):
-            self.swarm.append(Partical())
+        self.swarm = [ Partical() for _ in range(self.swarm_size) ]
 
         # start iteration
 
