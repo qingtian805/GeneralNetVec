@@ -3,57 +3,7 @@ import numpy as np
 import pygmo as pg
 from net_vec import NetAlg, cfg, Unit, Evaluator, log
 
-def flatten(x: Unit) -> np.ndarray:
-    dims = 2 + cfg.max_cft_pkt * 3
-    res = np.zeros((dims * cfg._pkt_num))
-
-    last_time = cfg._last_end_time
-    for i in range(cfg._pkt_num):
-        p = i * dims
-        for j in range(cfg.max_cft_pkt):
-            res[p + 3 * j: p + 3 * j + 3] = x.craft[i][j]
-
-        res[p + 3 * cfg.max_cft_pkt : p + 3 * cfg.max_cft_pkt + 2] = [x.mal[i][0] - last_time, x.mal[i][1]]
-        last_time = x.mal[i][0]
-
-    return res
-
-def deflatten(x: np.ndarray) -> Unit:
-    if len(np.shape(x)) > 1:
-        return None
-
-    dims = 2 + cfg.max_cft_pkt * 3
-    res = Unit()
-
-    itv = cfg._last_end_time
-    for i in range(cfg._pkt_num):
-        p = i * dims
-        for j in range(cfg.max_cft_pkt):
-            res.craft[i][j] = x[p + j * 3: p + j * 3 + 3]
-
-        res.mal[i] = [x[p + 3 * cfg.max_cft_pkt] + itv, x[p + 3 * cfg.max_cft_pkt + 1]]
-        itv += x[p + 3 * cfg.max_cft_pkt]
-
-    return res
-
 class generation_problem:
-    restrict: list[list] = [[], []] # [[lower_bound], [upper_bound]]
-
-    def _cal_restriction_vector(self):
-        self.restrict = [[], []] # [[lower_bound], [upper_bound]]
-
-        max_mal_itv = (cfg._pkt_list[-1].time - cfg._last_end_time) * (cfg.max_time_extend + 1)
-        mal_itv_lmt = max_mal_itv / cfg.fence_time_divider
-        cft_itv_lmt = mal_itv_lmt / cfg.cft_time_divider
-
-        for i in range(cfg._pkt_num):
-            for _ in range(cfg.max_cft_pkt):
-                self.restrict[0] += [cft_itv_lmt, cfg.proto_min_lmt, cfg.data_min_lmt]
-                self.restrict[1] += [max_mal_itv, cfg._proto_max_lmt[i], cfg.data_max_lmt[round(cfg._proto_max_lmt[i])]]
-
-            self.restrict[0] += [mal_itv_lmt, 0]
-            self.restrict[1] += [max_mal_itv, cfg.max_cft_pkt]
-
     def __init__(self, evaluator: Evaluator):
         """将流量优化问题定义转移到 Pygmo2 中
         """
@@ -64,13 +14,17 @@ class generation_problem:
         self.dims = cfg._pkt_num * (2 + cfg.max_cft_pkt * 3)
         self.evaluator = evaluator
 
-        self._cal_restriction_vector()
+        self.restrict = [
+                [0.] * self.dims,
+                [1.] * self.dims
+            ]
 
-    def fitness(self, x):
+    def fitness(self, x: np.ndarray):
         if x is None:
             return None
 
-        u = deflatten(x)
+        u = Unit()
+        u.data[:] = x
         return [self.evaluator.evaluate(u)]
 
     def get_bounds(self):
@@ -107,8 +61,11 @@ class PygmoPort(NetAlg):
         """Pygmo 算法"""
         self.pop_size = pop_size
 
+        self.prob = None
+        """Pygmo 问题"""
         self.pop = None
         """Pygmo 人口(染色体集合)"""
+
 
     def get_paramters(self):
         param = self.param
@@ -126,12 +83,9 @@ class PygmoPort(NetAlg):
 
     def execute(self):
         # 初始化染色体
-        uls = [Unit().initialize() for _ in range(self.pop_size)]
-        prob = pg.problem(generation_problem(self.evaluator))
-        self.pop = pg.population(prob, 0)
-        for x in uls:
-            x = flatten(x)
-            self.pop.push_back(x)
+        if self.prob is None:
+            self.prob = pg.problem(generation_problem(self.evaluator))
+        self.pop = pg.population(self.prob, size=self.pop_size)
 
         # 迭代过程
         for _ in range(self.gen):
@@ -139,7 +93,8 @@ class PygmoPort(NetAlg):
 
         best_x = self.pop.get_x()[self.pop.best_idx()]
         # Prepare evaluator for next group
-        best_x_unit = deflatten(best_x)
+        best_x_unit = Unit()
+        best_x_unit.data[:] = best_x
         best_x_unit.restrict()
 
         return best_x_unit
