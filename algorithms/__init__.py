@@ -6,5 +6,6 @@
 
 from .local_best_pso import LBPSO
 from .pygmo_ifce import PygmoPort
+from .reptile_search_algorithm import RSA
 
-__all__ = ["LBPSO", "PygmoPort"]
+__all__ = ["LBPSO", "PygmoPort", "RSA"]

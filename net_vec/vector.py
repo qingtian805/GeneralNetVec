@@ -53,8 +53,6 @@ class Unit:
         Unit.craft 构建包成员,数据结构:0 正向相对时间 1 协议层数 2 mtu
 
         一个Unit向量实例表征一条完整的流
-
-        :param initialize: 初始化符号，如果设置为 True，则进行随机初始化，否则向量为全0
         """
         self.data: np.ndarray = np.zeros((cfg._pkt_num * (2 + cfg.max_cft_pkt * 3)), dtype=np.float64)
         self.mal: np.ndarray = self.data.reshape((-1, 2 + cfg.max_cft_pkt * 3))[:, -2:]

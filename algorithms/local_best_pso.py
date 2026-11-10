@@ -1,4 +1,3 @@
-import random
 from copy import deepcopy
 import numpy as np
 
@@ -26,6 +25,8 @@ class LBPSO(NetAlg):
             swarm_size: int = 6,
             grp_size: int = 3,
             *args,
+            seed1 = None,
+            seed2 = None,
             **kwargs):
 
         """
@@ -46,6 +47,8 @@ class LBPSO(NetAlg):
         self.iter = iter
         self.swarm_size = swarm_size
         self.grp_size = grp_size
+        self.rng1 = np.random.default_rng(seed1)
+        self.rng2 = np.random.default_rng(seed2)
 
         self.grp_num = swarm_size // grp_size
 
@@ -87,8 +90,8 @@ class LBPSO(NetAlg):
         # congitive V
         cog_V = self._generate_V(p.x, p.indi_bestx)
 
-        r1 = random.random()
-        r2 = random.random()
+        r1 = self.rng1.random()
+        r2 = self.rng2.random()
 
         p.v = self.w * p.v + self.c1 * r1 * cog_V + self.c2 * r2 * soc_V
 
