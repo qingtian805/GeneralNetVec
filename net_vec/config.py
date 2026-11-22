@@ -1,6 +1,7 @@
 from scapy.utils import EDecimal
 from scapy.packet import Packet, Raw
 import numpy as np
+from .utils import header_len
 
 class Conf:
     def _cal_normalizer(self):
@@ -11,10 +12,11 @@ class Conf:
             for _ in range(cfg.max_cft_pkt):
                 minimum += [self.itv_min_lmt, self.proto_min_lmt, self.data_min_lmt]
                 maximum += [self.itv_max_lmt, self._proto_max_lmt[i], self.data_max_lmt]
+                if self.data_is_payload:
+                    maximum[-1] -= header_len(self._pkt_list[i])
 
             minimum += [self.itv_min_lmt, 0]
             maximum += [self.itv_max_lmt, self.max_cft_pkt]
-
 
         self._max_vec = np.array(maximum)
         self._min_vec = np.array(minimum)
@@ -59,12 +61,12 @@ class Conf:
             itv_max_lmt: float = None,
             itv_min_lmt: float = None,
             max_cft_pkt: int = None,
-            max_cft_pkt_prob: float = None,
             max_time_extend: float = None,
             min_time_extend: float = None,
             proto_min_lmt: float = None,
             data_max_lmt: list = None,
             data_min_lmt: float = None,
+            data_is_payload: bool = None,
             pkt_list: list[Packet] = None,
             last_end_time: EDecimal = None,):
 
@@ -73,19 +75,26 @@ class Conf:
         :param itv_max_lmt: 流量中最大包间隔
         :param itv_min_lmt: 流量中最小包间隔
         :param max_cft_pkt: 每个原始包对应构建包的最大数量(l_c)
-        :param max_cft_pkt_prob: 在 0-1 之间的概率,限制一个slot填入构造包的最大概率,相当于 max_cft_pkt 的最大乘数
         :param max_time_extend: 新流量相较于原始的时间倍数(l_t)
         :param min_time_extend: 新流量相较于原始的时间倍数(l_t)
         :param proto_min_lmt: 用于限制构建包最小使用的协议层数
         :param data_max_lmt: 用于限制构建包最大包长度，一般填写目标链路 mtu
         :param data_min_lmt: 用于限制构建包最小包长度, 限制构建包, 无论协议层数
+        :param data_is_payload: 定义构建包的长度表示载荷长度，否则表示整包长度
+        :param pkt_list: 见函数 set_pkt_list 的参数说明
+        :param last_end_time: 见函数 set_pkt_list 的参数说明
         """
         normalizer_modified = False
 
+        if itv_max_lmt is not None:
+            self.itv_max_lmt = itv_max_lmt
+            normalizer_modified = True
+        if itv_min_lmt is not None:
+            self.itv_min_lmt = itv_min_lmt
+            normalizer_modified = True
+
         if max_cft_pkt is not None:
             self.max_cft_pkt = max_cft_pkt
-        if max_cft_pkt_prob is not None:
-            self.max_cft_pkt_prob = max_cft_pkt_prob
         if max_time_extend is not None:
             self.max_time_extend = max_time_extend
         if min_time_extend is not None:
@@ -100,17 +109,14 @@ class Conf:
         if data_min_lmt is not None:
             self.data_min_lmt = data_min_lmt
             normalizer_modified = True
-        if itv_max_lmt is not None:
-            self.itv_max_lmt = itv_max_lmt
-            normalizer_modified = True
-        if itv_min_lmt is not None:
-            self.itv_min_lmt = itv_min_lmt
+        if data_is_payload is not None:
+            self.data_is_payload - data_is_payload
             normalizer_modified = True
 
         if pkt_list is not None:
             self.set_pkt_list(pkt_list, last_end_time)
 
-        if normalizer_modified:
+        if normalizer_modified and self._pkt_list is not None:
             self._max_vec, self._min_vec = self._cal_normalizer()
 
     def __init__(self):
@@ -125,8 +131,6 @@ class Conf:
 
         self.max_cft_pkt: int           = 1
         """ 每个原始包对应构建包的最大数量(l_c)   \n 默认值 1 """
-        self.max_cft_pkt_prob: float    = 0.01
-        """ 概率值, 限制一个 slot 填入构造包的最大概率, 相当于 max_cft_pkt 的最大乘数   \n 默认值 0.01 """
         self.max_time_extend: float     = 6.
         """ 新流量相较于原始的时间倍数(l_t)   \n 默认值 6.0 """
         self.min_time_extend: float     = 3.
@@ -141,6 +145,8 @@ class Conf:
         """ 用于限制构建包的最大包长度, 一般对应链路 mtu, 常见值 1500    \n 默认值 1500."""
         self.data_min_lmt: float        = 0.
         """ 用于限制构建包的最小包长度, 限制构建包, 无论协议层数   \n 默认值 0.0"""
+        self.data_is_payload: bool      = False
+        """ 定义构建包的长度是载荷长度，否则表示构建包整包长度   \n 默认值 False """
 
         self._pkt_list: list[Packet] | None  = None
         """ 被处理的恶意包列表，用于构建向量与重构流量 """
@@ -148,7 +154,7 @@ class Conf:
         """ 上一条流结束的时间 """
         self._pkt_num: int | None               = None
         """ 记录恶意流量的包数量 """
-        self._prqoto_max_lmt: list[float] | None = None
+        self._proto_max_lmt: list[float] | None = None
         """ 用于限制构建包最大使用的协议层数 """
 
         self._max_vec: np.ndarray = None

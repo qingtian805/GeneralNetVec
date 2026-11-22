@@ -6,26 +6,14 @@ import numpy as np
 from scapy.packet import Raw, Packet
 
 from .config import cfg
-
-def decide_has_pkt(crafted_pkt_prob: float):
-    """decide_has_pkt 用于确定一个位置是否拥有包，概率为 crafted_pkt_prob
-
-    :param crafted_pkt_prob: 函数返回 True 的概率
-    :return: 在此位置是否构建包
-    :rtype: bool
-    """
-    r = random.random()
-    if r < crafted_pkt_prob:
-        return True
-    else:
-        return False
+from .utils import header_len, EPSILON
 
 def random_bytes(length):
     tmp_str = ''.join(random.choice(string.printable) for _ in range(length))
     return bytes(tmp_str, encoding='utf-8')
 
 def max_min_normalize(x):
-    return (x - cfg._min_vec) / (cfg._max_vec - cfg._min_vec)
+    return (x - cfg._min_vec) / (cfg._max_vec - cfg._min_vec + EPSILON)
 
 def max_min_denormalize(x):
     return x * (cfg._max_vec - cfg._min_vec) + cfg._min_vec
@@ -95,8 +83,11 @@ class Unit:
                 pkt[pkt_layers[target_layer_num - 1]].remove_payload()
 
                 # 添加随机内容，内容长度被 MTU 限制
-                pkt.add_payload(random_bytes(int(round(
-                    data[p + 3 * j + 2])))) # craft[i][j][2]
+                if cfg.data_is_payload:
+                    payload_length = data[p + 3 * j + 2] # craft[i][j][2]
+                else:
+                    payload_length = data[p + 3 * j + 2] - header_len(cfg._pkt_list[i])
+                pkt.add_payload(random_bytes(int(round(payload_length))))
                 pkt.time = (last_pkt_time + data[p + 3 * j])  # craft[i][j][0]
                 last_pkt_time = pkt.time
                 new_list.append(pkt)
@@ -112,7 +103,6 @@ class Unit:
         """约束函数，用于约束向量数据，具体完成以下工作：
 
         1. 时间约束：流量包之间需要满足一个最小时间间隔，根据是原始包还是构建包具体遵守对象有所不同
-            next: 流量包之间需要满足的最小时间间隔直接通过设置获取，原始包和构建包遵循相同约束？
         2. 长度约束：构建包可以改变包长度，但必须满足 cfg.data_min_lmt < x < cfg.data_max_lmt\
         3. 协议层数约束：为了能够构建构建包，其层数必须小于其对应的原始包
         """
