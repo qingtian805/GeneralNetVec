@@ -6,27 +6,29 @@ from .evaluator import Evaluator
 
 class NetAlg:
     r"""
-    netAlg 网络算法基类，提供一些通用的工具：
+    NetAlg 网络算法基类，提供一些通用的工具：
 
     * `evaluator` 为通用评估器，会返回一条
 
     实现需要以下内容：
 
-    * 构造函数 `__init__` 完成算法参数的设置，调用基类 __init__ 完成评估器设置
-    * 实现获取算法参数的函数 `get_paramters`
-    * 实现一个 `_iteration` 内部迭代函数，使用 log.iteration_logger 修饰
-    * 实现运行函数 `execute`，函数中完成算法从初始化到结束的一次运行过程
-    * 实现一个获取当前最佳向量的函数 `get_best_x`，函数应该返回的距离、序号
+    * 构造函数 `__init__()` 完成算法参数的设置，需要调用父类构造函数，完成基类的初始化
+    * 实现获取算法参数的函数 `get_paramters()`
+    * 实现一个 `_iteration()` 内部迭代函数，使用 log.iteration_logger 修饰
+    * 实现运行函数 `execute()`，函数中完成算法从初始化到结束的一次运行过程
+    * 实现一个获取当前最佳向量的函数 `get_best_x()`，函数应该返回的距离、序号
     """
-    def __init__(
-            self,
-            evaluator: Evaluator | None = None,):
-
-        self.evaluator = evaluator
-
     def set_evaluator(self, evaluator: Evaluator):
-        r""" 设置算法使用的评估器 """
+        """ 设置算法使用的评估器 """
         self.evaluator = evaluator
+
+    def __init__(self):
+        """ 网络算法基类
+
+        :param evaluator: 设置算法使用的评估器，相当于调用 `set_evaluator()`
+        """
+
+        self.evaluator: Evaluator | None = None
 
     def get_paramters(self) -> dict:
         """

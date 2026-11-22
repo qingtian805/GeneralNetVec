@@ -11,12 +11,11 @@ class RSA(NetAlg):
             beta: float = 0.1,
             iter: int = 4,
             swarm: int = 6,
-            *args,
+            *,
             seed = None,
             seed1 = None,
             seed2 = None,
-            seed3 = None,
-            **kwargs):
+            seed3 = None):
 
         """爬行动物搜索算法
 
@@ -30,7 +29,7 @@ class RSA(NetAlg):
         :param seed3: 随机数生成器的种子
         """
 
-        super().__init__(*args, **kwargs)
+        super(RSA, self).__init__()
 
         """当前全局最优"""
         self.alpha = alpha

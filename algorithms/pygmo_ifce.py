@@ -38,16 +38,14 @@ class PygmoPort(NetAlg):
             self,
             algo,
             algo_param: dict,
-            pop_size: int,
-            *args,
-            **kwargs):
+            pop_size: int):
 
         """
         :param algo: 用于构建 pg.algorithm, 相当于 `pg.algorithm(algo)`, 请参考 `list of algorithms` 部分
         :param algo_param: 算法使用的参数
         :param pop_size: 算法使用的染色体个数
         """
-        super().__init__(*args, **kwargs)
+        super(PygmoPort, self).__init__()
         self.param = deepcopy(algo_param)
 
         # Force algorithm run once

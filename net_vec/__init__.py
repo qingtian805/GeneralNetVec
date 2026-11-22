@@ -7,6 +7,7 @@
 3. 评估器类：评估器类是用于评价一条向量有效性的函数，封装一个特征提取器作为算法的有效性参考
 """
 
+from .utils import *
 from .config import cfg
 from .vector import Unit
 from .algorithm import NetAlg
@@ -19,5 +20,6 @@ __all__ = ["cfg",
            "NetAlg",
            "Evaluator",
            "Examinator", "OLExaminator",
-           "log",
-           ]
+           "log",]
+
+__all__ += utils.__all__
