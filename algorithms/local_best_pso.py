@@ -1,7 +1,7 @@
 from copy import deepcopy
 import numpy as np
 
-from net_vec import NetAlg, Unit, cfg, log
+from net_vec import NetAlg, Unit, log
 
 class Partical:
     def __init__(self):
@@ -24,10 +24,8 @@ class LBPSO(NetAlg):
             iter: int = 3,
             swarm_size: int = 6,
             grp_size: int = 3,
-            *args,
             seed1 = None,
-            seed2 = None,
-            **kwargs):
+            seed2 = None,):
 
         """
         本地拓扑PSO算法
@@ -39,7 +37,7 @@ class LBPSO(NetAlg):
         :param swarm_size: 粒子群大小
         :param grp_size: 每组粒子数量
         """
-        super().__init__(*args, **kwargs)
+        super(LBPSO, self).__init__()
 
         self.w = w
         self.c1 = c1
@@ -126,9 +124,13 @@ class LBPSO(NetAlg):
                 p.indi_bestx_dis = new_dis
 
             if new_dis < self.grp_bestx_dis[grp_index]:
-                self.grp_bestx[grp_index] = deepcopy(p.x)
                 self.grp_bestx_dis[grp_index] = new_dis
                 self.grp_bestx_index[grp_index] = i
+
+        self.grp_bestx[grp_index] = deepcopy(
+            partical_list[self.grp_bestx_index[grp_index]]
+        )
+
         # Update partical velocity and position
         for p in partical_list:
             self._update_V(p, self.grp_bestx[grp_index])
@@ -143,9 +145,10 @@ class LBPSO(NetAlg):
 
             # 如果组内找到的最好要好于全局，则更新全局最好信息
             if self.grp_bestx_dis[i] < self.glb_bestx_dis:
-                self.glb_bestx = deepcopy(self.grp_bestx[i])
                 self.glb_bestx_dis = self.grp_bestx_dis[i]
                 self.glb_bestx_index = self.grp_bestx_index[i] + st
+
+        self.glb_bestx = deepcopy(self.swarm[self.glb_bestx_index])
 
     def execute(self):
         # initialize
